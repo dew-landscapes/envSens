@@ -1,0 +1,52 @@
+packages:
+# targets
+ - "targets"
+ - "tarchetypes"
+ 
+# tidyverse
+ - "dplyr"
+ - "tidyr"
+ - "purrr"
+ - "forcats"
+ - "ggplot2"
+ - "tibble"
+ - "stringr"
+ - "readr"
+ 
+# arrow
+ - "arrow"
+ - "sfarrow"
+ 
+# parallel
+ - "crew"
+ - "future.callr"
+ - "crew.cluster"
+                            
+# files
+ - "fs"
+                            
+# gis
+ - "sf"
+ - "tmap"
+ - "terra"
+
+# env
+ - "envTargets"
+ - "envFunc"
+ - "envImport"
+ - "envClean"
+ - "envTrend"
+ - "envRaster"
+ - "envSDM"
+ - "envModel"
+ - "envReport"
+ - "envDistribution"
+ - "envShiny"
+                            
+# report
+ - "knitr"
+ - "rmarkdown"
+ - "bookdown"
+ - "officer"
+ - "ymlthis"
+ - "bookdowntargets"
