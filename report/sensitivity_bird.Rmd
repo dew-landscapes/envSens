@@ -1,0 +1,783 @@
+---
+title: "Bird sensitivity progress report"
+output:
+  bookdown::html_document2:
+    code_folding: hide
+    number_sections: true
+    fig_caption: true
+    toc: true
+    toc_float: true
+    toc_depth: 3
+    theme: lumen
+    highlight: tango
+bibliography: DEW_reference.bib
+link-citation: yes
+linestretch: 1.5
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+# Introduction
+This report summarises recent progress on bird sensitivity data manipulation and analysis, including data cleaning, recategorisation, summary statistics, and any modelling or workflow steps completed to date.
+
+# Data Import and Cleaning
+
+Import species from final SDM output.
+
+```{r data_import}
+
+source("sensitivity_functions.R")
+
+#### Braemer Province
+
+bp <- read.csv("PIA_final/taxa_summary_Braemer Province.csv") #209
+
+#### Upper Spencer Golf
+
+usg <- read.csv("PIA_final/taxa_summary_Upper Spencer Gulf - Gawler Ranges.csv") #317
+
+df <- base::rbind(bp, usg) %>% dplyr::distinct()
+splist <- organise_piaout(df)
+sp_tables <- base::split(splist, splist$ala_class)
+
+```
+
+# Bird databases
+
+## Birdbase 2025
+
+Tobias & Pigot (2019) Integrating behaviour and ecology into global biodiversity conservation strategies. Phil. Trans. R. Soc. B, 374, 1781. [http://doi.org/10.1098/rstb.2019.0012](http://doi.org/10.1098/rstb.2019.0012)
+
+BirdBase 2025 is currently the most comprehensive global bird trait dataset, incorporating the most up-to-date species taxonomy and a broad suite of behavioural, ecological, and morphological traits. While the database provides excellent global coverage, certain traits, such as wingspan is missing or incomplete for many species. For the Australian context, some traits are more fully represented in Garnett et al. (2015).
+
+## Garnett 2015
+
+Garnett et al. (2015) Biological, ecological, conservation and legal information for all species and subspecies of Australian bird. Scientific Data.[https://doi.org/10.1038/sdata.2015.61](https://doi.org/10.1038/sdata.2015.61)
+
+This dataset provides the most complete and authoritative compilation of biological, ecological, conservation, and legal information for all Australian bird species and subspecies. It is exceptionally useful for regional analyses because it includes Australian-specific traits such as feeding or breeding in agriculture or urban area. However, for many subspecies, data availability remains limited.
+
+## AVONET 2021
+
+Tobias et al. 2021 (Ecology Letters) AVONET: morphological, ecological and geographical data for all birds. [https://doi.org/10.1111/ele.13898](https://doi.org/10.1111/ele.13898)
+
+AVONET provides a globally standardised dataset of morphological measurements, including wing, bill, leg and tail traits, along with ecological and geographic information for all bird species. It is particularly valuable for retrieving traits related to flight efficiency, dispersal capacity, and manoeuvrability, including:
+
+- Aspect ratio (aerodynamic performance):
+
+$$
+\text{Aspect ratio} = \frac{\text{Wingspan}^2}{\text{Total wing area}}
+$$
+- **Hand-Wing Index (HWI)**:
+
+A widely used proxy for wing aspect ratio when wing area is unavailable. HWI strongly correlates with dispersal ability and is easier to measure consistently.
+
+AVONET does not provide total wing area directly, but relevant approximations include:
+
+- Howard et al. (2018) triangular method:
+
+$$
+\mathrm{Total}\ \mathrm{wing}\ \mathrm{area}\ \left(\mathrm{Triangle}\right)=\frac{WL\cdotp S1}{2}2+\left(\mathrm{W}S-2 WL\right)\ S1=\left( WS- WL\right)\ S1
+$$ 
+
+- Fu et al. (2023) elliptical method:
+
+$$
+\mathrm{Total}\ \mathrm{wing}\ \mathrm{area}\ \left(\mathrm{Ellipse}\right)=\frac{1}{2}\pi \cdotp WL\cdotp S1+\left( WS-2 WL\right)\ S1
+$$
+
+## Bird Behaviour 2019
+
+Tobias & Pigot (2019) Integrating behaviour and ecology into global biodiversity conservation strategies. Phil. Trans. R. Soc. B, 374, 1781. [http://doi.org/10.1098/rstb.2019.0012](http://doi.org/10.1098/rstb.2019.0012)
+
+This paper synthesises global evidence on how behavioural and ecological traits influence extinction risk. It highlights the trait categories that are most predictive of threat status, including: geographic range size, body mass, human population density across a species’ range, diet, migratory strategy, mating system, foraging behaviour, island dwelling (not relevant for this study).
+
+These trait–threat associations provide a theoretical foundation for selecting sensitivity indicators in the present analysis.
+
+## Avian Body Size 2007
+
+Lislevand et al. (2007). Avian body sizes in relation to fecundity, mating system, display behavior, and resource sharing: Ecological archives E088‐096. Ecology, 88(6), 1605-1605. [https://doi.org/10.1890/06-2054]( https://doi.org/10.1890/06-2054)
+
+This trait database including a five tier classification for mating system from polyandry to polygyny as well as courtship display , which are not presented in other trait database.
+
+## Elton Birds 2014
+
+Wilman et al. (2014). EltonTraits 1.0: Species-level foraging attributes of the world's birds and mammals. Ecology 95:2027. [http://dx.doi.org/10.1890/13-1917.1.](http://dx.doi.org/10.1890/13-1917.1.)
+
+EltonTraits provides global foraging guild information, including dietary categories, foraging strata, and feeding behaviour. It is one of the standardised references for ecological niche and foraging attributes, complementing more morphological datasets such as AVONET. Some categories may be coarse for Australian taxa, but it remains valuable for cross-taxonomic consistency.
+
+## Bird et al 2020
+
+Bird et al. (2020). Generation lengths of the world's birds and their implications for extinction risk. Conservation Biology, 34(5), 1252-1261. [https://doi.org/10.1111/cobi.13486](https://doi.org/10.1111/cobi.13486)
+
+This paper provides modeled generation length estimates for all bird species, an essential metric in Red List assessments and extinction-risk modelling. In the modelling process, range size (extent of occurance, EOO) was included. Both metrics are valuable indicators for sensitivity. These two metrics were also displayed on Birdlife Datazone, although some discrepancy exist.
+
+Shannon and Simpson diversity indices are highly correlated (cor = 0.97), but the Simpson index places greater emphasis on evenness and is bounded between 0 and 1. For these reasons, the Simpson index is used here.
+
+```{r database, fig.show='hide'}
+
+library(traitdata)
+library(dplyr)
+library(tidyr)
+
+## BIRDBASE - Diet, Habitat, Ristricted Range
+birdbase <- read.csv("database/data_BIRDBASE v2025.1 Sekercioglu et al. Final.csv")
+
+hb_cols <- c("F", "BM", "WD", "SH", "SV", "G", "PL", "R", "D", "A", "C", "RV", "W", "SE", "O")
+db_cols <- birdbase %>% select(contains("Wt"), -SUM.Wt) %>% names()
+
+birdbase_trim <- birdbase %>%
+  dplyr::select(Genus, Species, Primary.Diet, DB, HB, RR, db_cols, hb_cols) %>% 
+  mutate(across(everything(), ~ replace(., . == "T", "0"))) %>% 
+  mutate(across(hb_cols, ~ replace_na(., "0"))) %>% 
+  clean_strtypes() %>% 
+    bind_cols(
+    calc_diversity(., db_cols) %>% rename(db_shannon = shannon, db_simpson = simpson),
+    calc_diversity(., hb_cols) %>% rename(hb_shannon = shannon, hb_simpson = simpson)
+  )
+
+# plot(birdbase_trim$db_simpson, birdbase_trim$db_shannon)
+# plot(birdbase_trim$hb_simpson, birdbase_trim$hb_shannon)
+# cor(birdbase_trim$hb_simpson, birdbase_trim$hb_shannon)
+
+# Australian Bird Database - Habitat, Migration
+data("australian_birds")
+names(australian_birds) <- gsub("^X\\d+_", "", names(australian_birds))
+aub_trim <- australian_birds %>% 
+  dplyr::filter(is.na(Subspecies_name_2)) %>%  # filter subspecies
+  dplyr::select(Genus, Species, Taxon_common_name_2, contains("_habitat_"), contains("migrant"), contains("Food_")) %>% 
+   mutate(
+    DB = rowSums(select(., contains("Food_"))),
+    breeding_HB = rowSums(select(., contains("Breeding_habitat"))),
+    feeding_HB = rowSums(select(., contains("Feeding_habitat"))), 
+  )
+
+# Birdlife - EOO & Generation length (Bird et al 2020)
+genlength <- readxl::read_excel("database/Modelled_GenLength_cobi13486-sup-0004-tables4.xlsx", 
+                               sheet = 1) %>% select(`Scientific name`, GenLength) %>% 
+  separate(`Scientific name`, into = c("Genus", "Species"), sep = " ") %>% 
+  mutate(lnGenLength = as.numeric(GenLength) %>% log())
+
+eoo <- readxl::read_excel("database/EOO_cobi13486-sup-0003-tables3.xlsx", sheet = 1, na = "NA") %>% 
+  select(`Scientific name`, `Extent of Occurrence (breeding/resident)`) %>% 
+  separate(`Scientific name`, into = c("Genus", "Species"), sep = " ") %>% 
+  mutate(logEOO = `Extent of Occurrence (breeding/resident)` %>% as.numeric() %>% log10()) %>% 
+  filter(logEOO > 1) # remove extinct spp
+```
+
+```{r combine}
+
+## Append all Australian species [other species may have taxonomic/name change issues]
+au_spp <-  australian_birds %>% 
+  dplyr::filter(is.na(Subspecies_name_2)) %>% 
+  dplyr::filter(Core_taxa_4 == 1) %>% 
+  dplyr::mutate(search_term = paste(Genus, Species)) %>% 
+  dplyr::distinct(search_term) %>% 
+  dplyr::filter(!search_term %in% sp_tables[["Aves"]]$search_term) %>% 
+  dplyr::filter(!search_term %in% alt.names$alt_name)
+
+aves <- sp_tables[["Aves"]] %>% bind_rows(au_spp) %>% distinct()
+
+## Combined database
+bird_table <- sp_tables[["Aves"]] %>% 
+  join_database(aub_trim, prefix = "aub_") %>% 
+  join_database(birdbase_trim, prefix = "bb_") %>% 
+  join_database(genlength, prefix = "bl_") %>% 
+  join_database(eoo, prefix = "bl_") %>% 
+  dplyr::distinct() %>% 
+  select(-contains("match"))
+
+## Write into csv
+write.csv(bird_table, "output/bird_table.csv", row.names = F)
+```
+
+
+# Traits and indicator selection
+
+After carefully examining all available trait databases and reviewing the literature on large-scale cross-species meta-analyses, five robust traits and one additional indicator were selected for inclusion in the bird sensitivity index.
+
+**These traits were selected based on numerous meta-analyses of bird breeding success, establishment success, and relationships with current threatening processes at both global and Australian scales. A trait may be a significant factor in one study but not another, which is normal, as analyses across many species and broad scales inevitably contain unexplained variation from local contexts and individual cases. Therefore, it is important to remember that simplifying a species into a single number can never be perfect—just like modelling—but the number can still be useful when it is generated properly with well-justified reasoning.**
+
+## Habitat breadth
+
+Habitat breadth is a consistent predictor of species establishment success in novel environments [@Cassey2004; @Blackburn2009].
+
+Species occupying a wide range of habitats in their native range are more likely to encounter suitable conditions elsewhere. Broad habitat tolerance reflects ecological generalism, enhancing survival in unfamiliar landscapes and increasing the likelihood of successful establishment.
+
+## Diet breadth
+
+Diet breadth is another key determinant of establishment success [@Cassey2004; @Blackburn2009].
+
+Dietary generalists can exploit a wider variety of food resources, which reduces dependence on specific prey that may be absent in new environments. Broad diets are associated with behavioural flexibility and environmental tolerance, which are strong predictors of establishment success.
+
+## Migratory
+
+Migratory behaviour constrains establishment in novel environments [@Cassey2004; @Blackburn2009] and is a significant predictor of extinction risk [@Tobias2019].
+
+Migratory species rely on social cues and coordinated movements to locate suitable habitats, increasing susceptibility to Allee effects. They also face the challenge of finding both breeding and non-breeding sites in novel landscapes. Long-distance migration, in particular, correlates with higher threat levels due to dependence on multiple, spatially separated habitats.
+
+## Generation Length
+
+Generation length represents the average age of breeding parents in the current cohort, reflecting population turnover. It lies between age at first breeding and the age of the oldest breeding individual, except in species that breed only once [@Bird2020].
+
+Longevity is difficult to measure in the wild, and banding records may bias estimates. Generation length is a standardised, biologically meaningful metric that captures life-history pace and population resilience.
+
+## Habitat use in Agriculture lands or urban
+
+The ability to forage in agricultural or urban areas was found negatively correlated to extinction risk [@Olah2024].
+
+Species capable of adapting to human-modified environments show reduced sensitivity to habitat disturbance and lower extinction risk.
+
+## Range size (indicator)
+
+Range size, although not a trait, serves as an important indicator of a species’ current condition. It is strongly associated with threat status and establishment success [@Cassey2004; @Blackburn2009; @Tobias2019; @Bird2020].
+
+Species with large native ranges tend to have broader ecological tolerance and higher likelihood of introduction success. Conversely, small-ranged species are likely to have specialised habitat requirement and suffering small population size, which makes the species more vulnerable to threats.
+
+## Ristricted range 
+
+The restricted range variable in BirdBase 2025 identifies species with a global range size < 50,000 km². Because the continuous range-size trait is log-transformed and scaled, its weight in the index is substantially reduced. Including a separate restricted-range indicator ensures that species with genuinely small distributions receive appropriate weighting—regardless of whether their limited range is due to naturally restricted geography or the result of historical habitat loss.
+
+# Manually filling the blank
+
+Although overall trait coverage is high, some fields remain incomplete. In these cases, additional information from the BirdLife DataZone—where coverage is often more comprehensive—was used to manually fill missing values. Only those cells absent from the basic trait table were supplemented, and the updated values were then rejoined to the main dataset.
+
+Automated approaches such as machine-learning–based imputation (e.g., [TDIP, Trait Data Imputation with Phylogeny](https://github.com/Matgend/TDIP?tab=readme-ov-file)) can also be used. However, caution is required: imputed values may sometimes be biologically unrealistic, and relying on them without scrutiny can bias downstream indices.
+
+```{r fill}
+
+bird_table_sensitivity <- bird_table %>%
+  dplyr::select(
+    search_term, aub_Taxon_common_name_2, # Names # do not include listing to avoid duplicates
+    aub_National_movement_Total_migrant_13,
+    aub_National_movement_Partial_migrant_13,
+    bb_DB,
+    bb_HB,
+    bb_hb_simpson,
+    bb_db_simpson,
+    bb_RR,
+    aub_breeding_HB,
+    aub_feeding_HB,
+    aub_DB,
+    aub_Feeding_habitat_Agricultural_landscapes_9,
+    aub_Feeding_habitat_Urban_landscapes_9,
+    aub_Breeding_habitat_Agricultural_lands_9,
+    aub_Breeding_habitat_Urban_9,
+    bl_lnGenLength,
+    bl_logEOO
+  ) %>% 
+  mutate(aub_Breeding_habitat_Agricultural_lands_9 = 
+           ifelse(is.na(aub_Breeding_habitat_Agricultural_lands_9), 0, aub_Breeding_habitat_Agricultural_lands_9)) %>%
+  mutate(aub_Breeding_habitat_Urban_9 = 
+           ifelse(is.na(aub_Breeding_habitat_Urban_9), 0, aub_Breeding_habitat_Urban_9))
+
+#### Show missingness per trait for the basic info table
+
+library(knitr)
+library(kableExtra)
+kbl(missing_by_col(bird_table_sensitivity), 
+      caption = "Missingness per trait") %>% 
+  kable_styling(bootstrap_options = c("striped", "hover", "bordered"),
+                full_width = FALSE) %>% 
+  scroll_box(height = "300px", width = "100%")
+
+#### Make manual table
+
+# make_manual_table(df_old = "output/bird_table_sensitivity_mtable_20251124.csv", 
+#                   df_new = bird_table_sensitivity)
+  
+# joining the manual table to the info table
+mtable <- read.csv("output/bird_table_sensitivity_mtable_20251124-20251202_1203.csv")
+scoring <- map_by_rowcol(A = mtable, B = bird_table_sensitivity, x = "search_term", Atype = "long")
+
+```
+
+# Scoring traits
+
+The following rules were used to score the traits. The scored traits were then output as a CSV.
+
+```{r scoring-table}
+
+library(tibble)
+library(knitr)
+library(kableExtra)
+
+scoring_table <- tibble(
+  Condition = c(
+    # Migratory
+    "Full migrant",
+    "Partial migrant",
+    "Otherwise",
+
+    # Diet breadth
+    "Caculated Simpson diversity index across types and proportioins of diet",
+
+    # Habitat breadth
+    "Caculated Simpson diversity index across types and proportioins of habitat use",
+
+    # Range size
+    "Scaled using scale_aubird_minmax() on the log transformed Extent of Occurrance",
+    
+    # Restricted range
+    "Global range size < 50,000 km2 (1)",
+    "Global range size > 50,000 km2 (0)",
+
+    # Generation length
+    "Scaled using scale_aubird_minmax() on nature log transformed generation length",
+
+    # Adaptability
+    "(breedadapt + feedadapt) > 2",
+    "breedadapt > 0",
+    "feedadapt > 0",
+    "(breedadapt + feedadapt) == 0"
+  ),
+  Raw_score = c(
+    # Migratory
+    3, 2, 1,
+    # DB
+    "simpson index",
+    # HB
+    "simpson index",
+    # Range size
+    "log(EOO)",
+    # Restrict range
+    0, 1, 
+    # Generation length
+    "ln(genlength)",
+    # Adaptability
+    0, 1, 2, 3
+  ),
+  Scaled_score = c(
+    # Migratory
+    1.00, 0.67, 0.33,
+    # DB
+    "1 - simpson index",
+    # HB
+    "1 - simpson index",
+    # Range size
+    "1 - scaled_value",
+    # Restrict range
+    0, 1, 
+    # Generation length
+    "scaled_value",
+    # Adaptability
+    0, 0.33, 0.67, 1
+  )
+)
+
+# Format table with kableExtra
+# Build table grouped by category
+kbl(
+  scoring_table,
+  caption = "Combined Scoring Rules for Sensitivity Index",
+  align = "l"
+) %>%
+  kable_classic(full_width = FALSE, html_font = "Arial") %>%
+  pack_rows("Migratory status", 1, 3) %>%
+  pack_rows("Diet breadth", 4, 4) %>%
+  pack_rows("Habitat breadth", 5, 5) %>%
+  pack_rows("Range size", 6, 6) %>%
+  pack_rows("Restricted Range", 7, 8) %>%
+  pack_rows("Generation length", 9, 9) %>%
+  pack_rows("Adaptability", 10, 13)
+
+```
+
+# The sensitivity score for bird species in the final list
+
+The sensitivity scores presented here apply only to the species in the final list. Scoring was also carried out for all Australian bird species to confirm that the index behaves reasonably across the broader avifauna.
+
+Several adjustments were made during development, and it became clear that including strongly correlated traits can skew the final scores. For example, adding body mass, which is tightly correlated with generation length, causes large-bodied species to appear artificially sensitive.
+
+Some traits that were identified as significant factors, or well-supported in previous meta-analyses, were ultimately not included in the index.
+
+## Traits or indicators NOT INCLUDED
+
+### Trophic Level
+
+It seems intuitive that raptors should be more sensitive to threats because they are top predators with high trophic levels, and they can indeed be identified easily (e.g., primary diet = vertebrates with diet breadth < 3). However, including trophic level would unintentionally down-weight the sensitivity of primary consumers that rely on very specific seeds or fruits. In addition, insectivores and omnivores (secondary consumers) who have more flexible diets are difficult to score meaningfully. For these reasons, trophic level was set aside for now.
+
+### Population trend and status
+
+Population trend and status may appear to be good indicators of sensitivity (i.e., current adaptability), but they are rarely used in sensitivity indices. This is likely because they reflect external pressures that affect species unevenly, rather than intrinsic biological traits. These metrics also change over time, making them less reliable for comparative assessments. Although population trends are widely available for birds, most plant species are not assessed by the IUCN and therefore this information is unavailable. For these reasons, I have excluded population trend and status from the index for now.
+
+### Body Mass
+
+Body mass has been identified as a significant predictor in several meta-analyses, showing correlations with breeding success [@Smart2024] and establishment success [@Blackburn2009] (larger species often fare better), as well as with threat status (larger species tend to be more threatened) [@Tobias2019]. These contradictory patterns suggest that body mass is not a reliable indicator on its own, as it is correlated with many other biological and ecological traits.
+
+Because body mass influences multiple axes of species biology simultaneously, it becomes difficult to interpret within a sensitivity index without over-weighting certain dimensions. To capture the “slow life-history” component more directly and with less confounding, generation length [@Bird2020] provides a clearer and more appropriate proxy.
+
+### Nest Type
+
+Nest architecture strongly influences breeding success [@Smart2024]. Enclosed nests tend to have higher survival rates than open nests across species. However, nest type represents only one aspect of reproductive success, which is shaped mainly by species-specific life-history strategies. 
+
+### Mating system
+
+Polygynous species are more likely to be threatened [@Tobias2019] and less likely to establish successfully due to Allee effects [@Blackburn2009]. The Avian Body Size Database categorises mating systems into: (1) polyandry, (2) monogamy (<5% polygyny), (3) mostly monogamy with occasional polygyny (5–15%), (4) mostly polygyny (>15%), and (5) lekking or promiscuous.
+Despite this structure, avian mating systems are highly complex. Extra-pair behaviours are widespread, vary along a continuum, and differ among populations. This complexity makes it difficult to apply consistent thresholds relevant to Allee effects or sensitivity scoring.
+
+### Climate specialisation
+
+Modelled climate specialisation from Franklin & Welbergen (2014) [@Garnett2014] could provide valuable insight into a species’ climatic niche and potential adaptability to environmental change. However, seabirds were not included in the modelling, and the indicator itself is too complex to impute reliably across all species.
+
+```{r score}
+
+scored <- scoring %>% 
+  mutate(across(where(is.character), ~na_if(., "NAV"))) %>% 
+  clean_strtypes()
+
+scored <- scored %>%
+  mutate(
+    #### Categorical data ####
+    score_mig = case_when( # Migratory
+      aub_National_movement_Total_migrant_13 == 1   ~ 3,
+      aub_National_movement_Partial_migrant_13 == 1 ~ 2,
+      TRUE                                          ~ 1) %>% (\(x) x / 3)(),
+    score_DB = 1 - bb_db_simpson,
+    score_HB = 1 - bb_hb_simpson,
+    scale_rangesize =  1 - scale_aubird_minmax(sp_col = scored$bl_logEOO, # logRangeSize
+                                               df = eoo, 
+                                               df_col = "logEOO")$col,
+    score_RistrictRange = bb_RR, # Restricted range
+    scale_genlength = scale_aubird_minmax(sp_col = scored$bl_lnGenLength, # lnGenLength
+                                          df = genlength, 
+                                          df_col = "lnGenLength")$col,
+    breedadapt = aub_Breeding_habitat_Agricultural_lands_9+aub_Breeding_habitat_Urban_9,
+    feedadapt = aub_Feeding_habitat_Agricultural_landscapes_9+aub_Feeding_habitat_Urban_landscapes_9,
+    score_adapt = case_when( # human landscape use
+      (breedadapt+feedadapt) > 2 ~ 0,
+      breedadapt > 0 ~ 1,
+      feedadapt > 0 ~ 2,
+      (breedadapt+feedadapt) == 0 ~ 3) %>% (\(x) x / 3)(),
+  ) %>%
+  mutate(
+    n_cols = ncol(select(., contains("score"), contains("scale"))),
+    sensitivity_index = rowSums(select(., contains("score"), contains("scale"))),
+    sensitivity_index_scaled = sensitivity_index / n_cols)
+
+write.csv(scored, "output/scoring_bird.csv", row.names = F)
+
+## Show the table
+
+scored %>% 
+  select(aub_Taxon_common_name_2, contains("score"), contains("scale"), sensitivity_index_scaled) %>% 
+  arrange(sensitivity_index_scaled) %>% 
+  mutate(across(where(is.numeric), round, digits = 2)) %>% 
+  kbl(caption = "Bird sensitivity score - BP and USG region",
+      align = "c") %>% 
+  kable_styling(bootstrap_options = c("striped", "hover", "bordered"),
+                full_width = TRUE) %>% 
+  scroll_box(height = "500px", width = "100%")
+
+```
+
+# Visualise the sensitivity index
+
+This plot shows how sensitivity scores are distributed across the current conservation listing categories. As expected, the scores span a wide range even within groups listed as threatened. We often assume that threatened species should have high intrinsic sensitivity; however, real-world threatening processes are complex and cannot be fully explained by sensitivity alone. Some species with low intrinsic sensitivity may still become threatened if exposed to particular pressures they are poorly equipped to tolerate.
+
+For example, the Black Kite is generally an insensitive species—it has a broad diet, uses a wide range of habitats, and often thrives in urban and agricultural areas. It is widespread and not listed as threatened in Australia. However, it is classified as Endangered in Taiwan due to high mortality from rodenticide use in agricultural landscapes. Examples like this demonstrate how specific external threats can override intrinsic resilience.
+
+```{r plots}
+
+library(ggplot2)
+
+df <- sp_tables[["Aves"]] %>% 
+  left_join(scored, by = "search_term")
+
+ggplot(df, aes(x = pia_listing_hierarchy,
+               y = sensitivity_index_scaled)) +
+  geom_boxplot(fill = "grey85", color = "black", outlier.shape = NA) +
+  geom_jitter(width = 0.15, alpha = 0.5, size = 1) +
+  labs(
+    x = "Listing",
+    y = "Sensitivity index (scaled 0–1)",
+    title = "Sensitivity Index by Listing Status"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = 30, hjust = 1)
+  )
+
+```
+
+# Additional explorations
+
+## What traits could predict breeding success?
+
+Below is a quick exploratory check of which traits may predict breeding success using a random forest model, fitted with default parameters and no tuning. The predictors included were:
+
+- Diet Breadth
+
+- Habitat Breadth
+
+- Flightlessness
+
+- Average Mass
+
+- Clutch size (min, max)
+
+- Incubation sex
+
+- Elevation range
+
+- Fledglings (min, max)
+
+- Social behaviours: Colonial, Social (large numbers of birds, mixed-species flocks, seasonal flocks of the same species, etc.), Pairs and family groups, Singly and pairs, Solitary, Lekking
+
+- Nest type: Burrow (in ground; also ground cavities), Cup/Bowl, Crevice, Cavity (tree), Dome (also oven), Half cup/Shallow, No nest, Other bird's nest, Platform, Pendant/Bag/Purse, Saucer, Scrape, Sphere/Globular, Mound
+
+- Nest substrate: Bamboo, Building, Stump, Ground, Cactus, Nest (usually nests of invertebrates, other birds except tree cavities, mammals, etc.), Pole, Rock, Shrub/Bush/Vine, Tree, Water, Grass
+
+It is important to note that only a very small proportion of bird species (around 5%) have available breeding-success data. As expected, this results in a model with low explanatory power and poor predictive accuracy on the test set.
+
+Nevertheless, the variable-importance plots still highlight several predictors that were previously found to be significant in [@Smart2024].
+
+```{r breedingsuccess}
+
+library(randomForest)
+library(caret)
+library(mlbench)
+library(Metrics)
+
+# Birdbase2025 nest details
+nestdata <- read.csv("database/nest_BIRDBASE v2025.1 Sekercioglu et al. Final.csv")
+
+# Join traits from birdbase dataset
+df <- birdbase %>% 
+  select(Latin..BirdLife...IOC...Clements.AviList., 
+         DB, HB, Flightlessness, BrS1, Average.Mass, 
+         Clutch_Min, Clutch_Max, Incu_Sex, Elevational.Range, 
+         Fldg1, Fldg2, contains("Social_")) %>% # require high data coverage
+  left_join(nestdata[, -c(1:2)], by = join_by(Latin..BirdLife...IOC...Clements.AviList. == Latin.Name)) %>% 
+  na.omit() %>% # get rid of rows with NA values - quick and dirty
+  mutate(group = sample(c('train', 'test'), n(), 
+                          replace = TRUE, prob = c(0.7, 0.3)))
+
+# Examine Breeding Success
+
+ggplot(df, aes(x = BrS1)) +
+  geom_histogram(
+    bins = 30,
+    alpha = 0.7
+  ) +
+  labs(
+    title = "Distribution of Breeding Success for 533 out of 11589 birds",
+    x = "Breeding Success",
+    y = "Frequency"
+  ) +
+  theme_minimal(base_size = 14)
+
+# Apply RF model
+rf_model <- randomForest(BrS1 ~ ., data = df[df$group=="train", -1])
+print(rf_model)
+
+# Test data
+pred <- predict(rf_model, df[df$group=="test", -1])
+
+# Get the variable importance
+var_imp <- importance(rf_model)
+var_imp_df <- data.frame(
+  Variable = rownames(var_imp),
+  Importance = var_imp[, 1]
+)
+
+p_varimp <- var_imp_df %>%
+  arrange(Importance) %>%
+  ggplot(aes(x = Importance, y = reorder(Variable, Importance))) +
+  geom_col(fill = "grey") +
+  labs(
+    title = "Random Forest Variable Importance",
+    x = "Importance (IncMSE)",
+    y = ""
+  ) +
+  theme_minimal(base_size = 14) + 
+    theme(axis.text.y = element_text(size = 6))
+
+p_varimp
+
+# Observed values
+obs <- df %>% filter(group == "test") %>% pull(BrS1)
+
+# Evaluation metrics
+rmse_val <- rmse(obs, pred)
+mae_val  <- mae(obs, pred)
+r2_val   <- 1 - sum((obs - pred)^2) / sum((obs - mean(obs))^2)
+cor_val  <- cor(obs, pred)
+
+tibble(
+  RMSE = rmse_val, # Large errors are heavily penalised. Lower = better.
+  MAE = mae_val, # Average absolute difference. Lower = better.
+  R2 = r2_val, # Proportion of variance explained. Higher = better.
+  Correlation = cor_val # Strength of predictive relationship. Higher = better.
+) %>% 
+  mutate(across(everything(), ~round(., 2))) %>% 
+  kbl(
+    caption = "Random Forest Model Performance Metrics",
+    align = "c"
+  ) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "bordered"),
+    full_width = FALSE
+  )
+
+```
+
+## Extracting habitat types from NVIS using occurance records: Data-driven habitat breadth
+
+**Findings**:
+
+1. NVIS 6 vector layers are extremely large, requiring reading by state rather than for all of Australia. Looping through states would be computationally expensive. Therefore, the Major Vegetation Group (MVG) raster layer is a suitable pilot dataset. MVG includes 32 vegetation types, offering good resolution relative to the trait database. An even finer 98-class vegetation subtype raster (MSG) also exists and has been used previously in my SDMs.
+
+2. The vegetation layers (created in 2017 and updated in 2024) represent only a single time slice. Ancient or outdated occurrence records must be excluded to avoid misclassification caused by historical land-use change. This issue can be partly resolved by filtering out cleared areas after extraction.
+
+3. Coordinate accuracy is a major limitation. At fine vegetation resolutions, even a 500 m error can place a record in the wrong vegetation type. Filtering records to ≤100 m accuracy (matching raster resolution) is necessary, but this results in substantial data loss, which is especially problematic for rare species.
+
+4. The extracted vegetation types generally make sense except for waterbirds. Because observers usually record them from the shore rather than on water, many coastal and wetland birds appear to use a wide range of MVGs—often woodlands or shrublands adjacent to water. Long-distance flyers show similar issues, as they can be recorded while merely passing over vegetation they do not actually use.
+
+5. Small sample sizes distort results. Species with few records often have vegetation usage skewed toward a single MVG represented by only a handful of observations.
+
+**Conclusion**:
+
+A data-driven vegetation extraction approach is not suitable for birds. Birds move freely across habitats (flying, walking, swimming), and observer behaviour introduces biases that misrepresent true habitat use. Because birds are exceptionally well-documented and their habitat associations are expert-curated and regularly updated (approximately every 5 years), it is more reliable to use expert-interpreted habitat information rather than vegetation extracted from occurrence points.
+
+For other taxa, especially mammals, reptiles, and amphibians, data-driven extraction of vegetation or habitat types can be meaningful and effective, because these groups have more restricted movements and less comprehensive expert-curated datasets.
+
+```{r NVIS}
+
+source("~/eryntest/Habitat Breadth Calculations/HB_functions.R")
+
+# Read data
+
+path <- "//env.sa.gov.au/dfsroot/Projects/Landscapes/prod/out/envCleaned/aus_imcra_prov_dissolve______0__P50Y__sa_br_dissolve/90__90__P1Y__species/clean/objects/bio_clean"
+bio_clean <- rio::import(path, format = "parquet")
+spp <- bio_clean %>% 
+  filter(taxa %in% scoring$search_term) %>% 
+  filter(rel_metres_adj <= 100)
+
+spp %>% 
+  group_by(taxa) %>% 
+  count() %>% 
+  as.data.frame() %>% 
+  summarise(
+    mean = mean(n, na.rm = TRUE),
+    median = median(n, na.rm = TRUE),
+    min = min(n, na.rm = TRUE),
+    max = max(n, na.rm = TRUE)) %>% 
+  kbl(caption = "Records per taxon",
+      align = "c") %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "bordered"),
+    full_width = FALSE)
+# Read NVIS layer: Major Vegetation Types
+
+library(terra)
+
+gdb_path <- "~/eryntest/Habitat Breadth Calculations/NVIS_V7_0_AUST_RASTERS_EXT_ALL/NVIS_V7_0_AUST_RASTERS_EXT_ALL/NVIS_V7_0_AUST_EXT.gdb"
+
+# the MVG raster layer
+layers <- rast(gdb_path)
+names(layers)
+veg = layers[["NVIS7_0_AUST_EXT_MVG_ALB"]]
+plot(veg)
+
+# extract MVG for each point
+pts <- vect(spp, geom = c("cell_long", "cell_lat"), crs = "EPSG:4283")
+pts_proj  <- project(pts, veg)
+ext <- extract(veg, pts)
+result <- cbind(spp, habitat = ext[, -which(names(ext) == "ID")])
+
+# calculate habitat breadth
+hb_data <- result %>%
+  na.omit() %>% 
+  group_by(common, habitat) %>%
+  summarise(n = n(), .groups = "drop_last") %>%
+  mutate(
+    total = sum(n),
+    pct = 100 * n / total
+  ) %>%
+  ungroup()
+
+# calculate habitat breadth filtering out low pct habitat
+
+hb <- hb_data %>% count_habitats()
+
+hb_trimed <- hb_data %>%
+  filter(!habitat %in% c("Cleared, non-native vegetation, buildings", "Unknown/no data")) %>% 
+  count_habitats(threshold = 1) # 1 percent seems to be a good threshold
+
+hb_trimed %>% 
+  kbl(caption = "MVGs (> 1%) used by each species", align = "c") %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "bordered"),
+    full_width = FALSE) %>% 
+  scroll_box(height = "500px", width = "100%")
+
+```
+
+## Clustering bird species using traits (codes not included)
+
+**Approach**:
+
+A preliminary exploration was conducted to cluster Australian bird species using traits from the dataset in Garnett et al. (2015) [@Garnett2015]. Because clustering cannot accommodate missing values, traits with <85% coverage were excluded, following Gendre et al. (2024) [@Gendre2024], who showed that high missingness reduces imputation accuracy. This introduces the first limitation: some biologically meaningful traits could not be included.
+
+Missing values were imputed using three machine-learning algorithms from the TDIP R package: mice_phylo, missForest_phylo, and kNN_phylo (*Benchmarking imputation methods for categorical biological data* [@Gendre2024]). The completed trait datasets were then clustered using Gower distance, which is suitable for mixed categorical and continuous traits.
+
+Clustering results were explored by selecting K groups, analogous to choosing K in K-means. The final visualisation is a clustered tree resembling phylogenetic tree/kinship clustering. It can also be made into a PCA-style ordination, with species coloured by their assigned cluster.
+
+**Conclusion**
+ 
+Multivariate analysis is fun because it will always produce something, but I genuinely do not recommend running these analyses without a clear hypothesis or solid questions to answer. Without knowing exactly what to look for, it is easy to fall into the trap of over-interpretation, or to get completely lost in never-ending analyses.
+
+# Concluding notes
+
+**Some tips learned about indexing**
+
+At first, I assumed that including as many relevant traits as possible would make the index more comprehensive. However, I eventually realised that this process is not an exploratory analysis like a GLMM or correlation study. The goal is to choose the most representative traits to build an index that is both reasonable and practical.
+
+To achieve this, it’s important to remember that good indices are simple, representative, and balanced—not overly complex or impractical to apply.
+
+Things to keep in mind:
+
+## Specialisation traits are more suitable for sensitivity index
+
+Sensitivity reflects major aspects of a species’ life history, including morphology, reproductive success, habitat and diet specialisation, and social behaviour. However, traits linked to reproduction and sociality are difficult to measure consistently across species. Lifetime reproductive success is rarely available, and proxies such as mating system, clutch size, or incubation period are strongly shaped by species-specific strategies and survival rates, making broad comparisons unreliable. Social behaviour traits face similar limitations.
+
+By contrast, specialisation—whether in habitat, diet, or other ecological dependencies—is more consistently documented, comparable across species, and directly linked to vulnerability. Specialists are typically more sensitive to environmental change because they depend on a narrower set of resources or conditions. For these reasons, specialisation traits are the most practical and informative indicators to include in a sensitivity index.
+
+## Data quality and consistency
+
+Even simple indices can be misleading if built on inconsistent or unreliable data. Prioritising traits with strong empirical foundations and good coverage reduces noise and bias.
+
+## Trait independence
+
+Overlapping or highly correlated traits can unintentionally double-count similar biological processes. Considering trait independence (or at least acknowledging collinearity) improves the interpretability of the final score.
+
+## Applicability and repeatability
+
+The index should be easy to apply to new species or updated datasets. If an index is too tailored to one specific dataset, it may not generalise well or be useful expanding to future species.
+
+## Communicating uncertainty and acknowledge the limitation
+
+No index is perfect, and acknowledging uncertainty from missing data, trait variation, or sources of information helps the usage and interpretation of the final scores. As no index is perfect and it can always get better with new techniques and dataset, it is important not to spend to much time polishing it with additional traits. Move on when it's about time!
+
+# Progress and Status
+
+- Completed:
+
+  - Exploration of bird databases
+  
+  - Deciding what to include in the sensitivity index and how
+
+  - Sensitivity scores for bird species in the final list
+
+- Next Steps:
+
+  - Exposure index (which will use other trait suits) to each threat
+  
+  - Discuss with Simeon how the numbers can be looped into and represented in the current workflow and PIA
+  
+  - Interpret exposure and sensitivity index altogether
+
+# Reference
