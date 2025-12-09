@@ -1,0 +1,9 @@
+project_010_setup:
+  script: 010_setup.R
+  store: store_010_setup
+  reporter_make: balanced
+  shortcut: yes
+project_020_taxa:
+  script: script_020_taxa.R
+  store: store_020_taxa
+  inherits: project_010_setup
