@@ -11,6 +11,9 @@ tar_option_set(packages = yaml::read_yaml("settings/packages.yaml")$packages
 # tars -------
 tars <- yaml::read_yaml("_targets.yaml")
 
+# tar source -------
+tar_source()
+
 # setup -------
 
 tar_plan(
@@ -47,6 +50,9 @@ tar_plan(
                              command = "H:/data/envSens/database/EOO_cobi13486-sup-0003-tables3.csv",
                              read = readr::read_csv(file = !!.x, col_types = readr::cols())
                              #, format = "file"
-  )
+  ),
+  
+  splist = rbind(pia_bp, pia_usg) %>% 
+    organise_piaout()
 )
 

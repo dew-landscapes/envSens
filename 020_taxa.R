@@ -16,10 +16,13 @@ tar_source()
 # targets -------
 
 targets_to_read <- names %>%
-  filter(!str_ends(name, "_file")) %>%
+  filter(!grepl("_file$", name)) %>%
   pull(name)
-
-df_list <- lapply(names$name, function(x) tar_read(x, store = "setup"))
+list = c()
+for (i in 1:length(targets_to_read)){
+  list[i] = tar_read(as.symbol(targets_to_read[i]), store = "setup")
+  
+}
 
 
 tar_plan(
