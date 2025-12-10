@@ -18,7 +18,50 @@
 # prefix = prefix added to the joining dataset as identifier
 # alt = alternative name table, required to be loaded prior.
 
-join_database <- function(A, B, A_sci = "search_term", alt = alt.names, prefix) {
+### Look up table
+
+alt.names <- data.frame(
+  search_term = c(
+    "Antigone rubicunda",
+    "Cinclosoma castanotum",
+    "Coturnix ypsilophora",
+    "Amytornis whitei",
+    "Hylacola cauta",
+    "Parvipsitta porphyrocephala",
+    "Petroica boodang",
+    "Ardea intermedia",
+    "Lophochroa leadbeateri",
+    "Spatula rhynchotis",
+    "Hypotaenidia philippensis",
+    "Amytornis modestus",
+    "Zapornia tabuensis",
+    "Oedura cincta",
+    "Morelia imbricata",
+    "Tympanocryptis tolleyi",
+    "Nyctophilus corbeni"
+  ),
+  
+  alt_name = c(
+    "Grus rubicunda",
+    "Cinclosoma castanotus",
+    "Synoicus ypsilophorus",
+    "Amytornis striatus",
+    "Calamanthus cauta",
+    "Glossopsitta porphyrocephala",
+    "Petroica multicolor",
+    "Mesophoyx intermedia",
+    "Cacatua leadbeateri",
+    "Anas rhynchotis",
+    "Gallirallus philippensis",
+    "Amytornis textilis",
+    "Porzana tabuensis",
+    "Oedura marmorata",
+    "Morelia spilota",
+    "Tympanocryptis lineata",
+    "Nyctophilus timoriensis")
+)
+
+join_database <- function(A, B, A_sci = "search_term", alt, prefix) {
   
   # 0. Paste genus and species into a column, add prefix
   B <- B %>% mutate(B_sci = paste(Genus, Species)) %>% 

@@ -16,6 +16,23 @@ linestretch: 1.5
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 ---
 
+```{r path}
+
+source("../R/sensitivity_functions.R")
+
+path_bp <- "H:/dev/out/envPIA/aus_imcra_prov_dissolve______0__P50Y__sa_br_dissolve/90__90__P1Y__species/pia__boundary__1__0__50000/summarise/sum_tbl.csv"
+
+path_usg <- "H:/dev/out/envPIA/aus_imcra_prov_dissolve______0__P50Y__sa_br_dissolve/90__90__P1Y__species/pia__boundary__2__0__50000/summarise/sum_tbl.csv"
+
+path_birdbase <- "H:/data/envSens/database/data_BIRDBASE v2025.1 Sekercioglu et al. Final.csv"
+
+path_genlength <- "H:/data/envSens/database/Modelled_GenLength_cobi13486-sup-0004-tables4.csv"
+
+path_eoo <- "H:/data/envSens/database/EOO_cobi13486-sup-0003-tables3.csv"
+
+out_path <- "../../out/envSens"
+```
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
@@ -29,15 +46,13 @@ Import species from final SDM output.
 
 ```{r data_import}
 
-source("sensitivity_functions.R")
-
 #### Braemer Province
 
-bp <- read.csv("PIA_final/taxa_summary_Braemer Province.csv") #209
+bp <- read.csv(path_bp)
 
 #### Upper Spencer Golf
 
-usg <- read.csv("PIA_final/taxa_summary_Upper Spencer Gulf - Gawler Ranges.csv") #317
+usg <- read.csv(path_usg)
 
 df <- base::rbind(bp, usg) %>% dplyr::distinct()
 splist <- organise_piaout(df)
@@ -123,7 +138,7 @@ library(dplyr)
 library(tidyr)
 
 ## BIRDBASE - Diet, Habitat, Ristricted Range
-birdbase <- read.csv("database/data_BIRDBASE v2025.1 Sekercioglu et al. Final.csv")
+birdbase <- read.csv(path_birdbase)
 
 hb_cols <- c("F", "BM", "WD", "SH", "SV", "G", "PL", "R", "D", "A", "C", "RV", "W", "SE", "O")
 db_cols <- birdbase %>% select(contains("Wt"), -SUM.Wt) %>% names()
@@ -155,12 +170,12 @@ aub_trim <- australian_birds %>%
   )
 
 # Birdlife - EOO & Generation length (Bird et al 2020)
-genlength <- readxl::read_excel("database/Modelled_GenLength_cobi13486-sup-0004-tables4.xlsx", 
-                               sheet = 1) %>% select(`Scientific name`, GenLength) %>% 
+genlength <- readr::read_csv(path_genlength, col_types = readr::cols()) %>%
+  select(`Scientific name`, GenLength) %>% 
   separate(`Scientific name`, into = c("Genus", "Species"), sep = " ") %>% 
   mutate(lnGenLength = as.numeric(GenLength) %>% log())
 
-eoo <- readxl::read_excel("database/EOO_cobi13486-sup-0003-tables3.xlsx", sheet = 1, na = "NA") %>% 
+eoo <- readr::read_csv(path_eoo, col_types = readr::cols(), na = "NA") %>% 
   select(`Scientific name`, `Extent of Occurrence (breeding/resident)`) %>% 
   separate(`Scientific name`, into = c("Genus", "Species"), sep = " ") %>% 
   mutate(logEOO = `Extent of Occurrence (breeding/resident)` %>% as.numeric() %>% log10()) %>% 
@@ -190,7 +205,7 @@ bird_table <- sp_tables[["Aves"]] %>%
   select(-contains("match"))
 
 ## Write into csv
-write.csv(bird_table, "output/bird_table.csv", row.names = F)
+readr::write_csv(bird_table, file.path(out_path, "bird_table.csv"))
 ```
 
 
@@ -285,11 +300,11 @@ kbl(missing_by_col(bird_table_sensitivity),
 
 #### Make manual table
 
-# make_manual_table(df_old = "output/bird_table_sensitivity_mtable_20251124.csv", 
+# make_manual_table(df_old = file.path(out_path, "bird_table_sensitivity_mtable_20251124.csv"), 
 #                   df_new = bird_table_sensitivity)
   
 # joining the manual table to the info table
-mtable <- read.csv("output/bird_table_sensitivity_mtable_20251124-20251202_1203.csv")
+mtable <- read.csv(file.path(out_path, "bird_table_sensitivity_mtable_20251124-20251202_1203.csv"))
 scoring <- map_by_rowcol(A = mtable, B = bird_table_sensitivity, x = "search_term", Atype = "long")
 
 ```
@@ -457,7 +472,7 @@ scored <- scored %>%
     sensitivity_index = rowSums(select(., contains("score"), contains("scale"))),
     sensitivity_index_scaled = sensitivity_index / n_cols)
 
-write.csv(scored, "output/scoring_bird.csv", row.names = F)
+write_csv(scored, file.path(out_path, "scored_bird_sensitivity.csv"))
 
 ## Show the table
 
@@ -650,8 +665,9 @@ source("~/eryntest/Habitat Breadth Calculations/HB_functions.R")
 
 # Read data
 
-path <- "//env.sa.gov.au/dfsroot/Projects/Landscapes/prod/out/envCleaned/aus_imcra_prov_dissolve______0__P50Y__sa_br_dissolve/90__90__P1Y__species/clean/objects/bio_clean"
-bio_clean <- rio::import(path, format = "parquet")
+path_bioclean <- "//env.sa.gov.au/dfsroot/Projects/Landscapes/prod/out/envCleaned/aus_imcra_prov_dissolve______0__P50Y__sa_br_dissolve/90__90__P1Y__species/clean/objects/bio_clean"
+
+bio_clean <- rio::import(path_bioclean, format = "parquet")
 spp <- bio_clean %>% 
   filter(taxa %in% scoring$search_term) %>% 
   filter(rel_metres_adj <= 100)

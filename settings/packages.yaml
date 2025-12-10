@@ -10,6 +10,7 @@ packages:
   - broom
   - stringr
   - readxl
+  - arrow
 
 database:
   - traitdata

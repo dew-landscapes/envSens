@@ -10,17 +10,20 @@
 #' 
 get_birdbase <- function(birdbase) {
   
-  hb_cols <- c("F", "BM", "WD", "SH", "SV", "G", "PL", "R", "D", "A", "C", "RV", "W", "SE", "O")
-  db_cols <- birdbase %>% select(contains("Wt"), -SUM.Wt) %>% names()
+  hb_cols <- c("F", "BM", "WD", "SH", "SV", "G", "PL", "R", 
+               "D", "A", "C", "RV", "W", "SE", "O")
+  db_cols <- birdbase %>% 
+    dplyr::select(contains("Wt"), -`SUM-Wt`) %>% 
+    base::names()
   
   birdbase_trim <- birdbase %>%
-    dplyr::select(Genus, Species, Primary.Diet, DB, HB, RR, db_cols, hb_cols) %>% 
-    mutate(across(everything(), ~ replace(., . == "T", "0"))) %>% 
-    mutate(across(hb_cols, ~ replace_na(., "0"))) %>% 
-    clean_strtypes() %>% 
-    bind_cols(
+    dplyr::select(Genus, Species, `Primary Diet`, DB, HB, RR, db_cols, hb_cols) %>% 
+    dplyr::mutate(dplyr::across(dplyr::where(is.character), ~ dplyr::na_if(., "T"))) %>% 
+    dplyr::mutate(dplyr::across(hb_cols, ~ tidyr::replace_na(., 0))) %>% 
+    readr::type_convert() %>% 
+    dplyr::bind_cols(
       calc_diversity(., db_cols) %>% rename(db_shannon = shannon, db_simpson = simpson),
       calc_diversity(., hb_cols) %>% rename(hb_shannon = shannon, hb_simpson = simpson)
     )
-  return(birdbase)
+  return(birdbase_trim)
 }

@@ -10,9 +10,10 @@
 #' 
 get_genlength <- function(genlength) {
   
-  genlength_trim <- genlenth %>%
-    separate(`Species name 2024`, into = c("Genus", "Species"), sep = " ") %>% 
-    mutate(lnGenLength = as.numeric(GenLength) %>% log())
+  genlength_trim <- genlength %>%
+    tidyr::separate(`Species name 2024`, into = c("Genus", "Species"), sep = " ") %>% 
+    dplyr::mutate(lnGenLength = `Generation length` %>% 
+             base::log())
   
   return(genlength_trim)
   
