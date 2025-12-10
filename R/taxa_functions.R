@@ -1,3 +1,7 @@
+#### organise_piaout ####
+
+## This function organise the final species list output from PIA. Note that this function is highly dependent on the column names of each data sources (ALA, PIA outputs)
+
 organise_piaout <- function(df) {
   
   # 1. label subspecies with 1/0, add a column of listing hierarchy, add prefix pia_
@@ -41,4 +45,20 @@ organise_piaout <- function(df) {
     dplyr::filter(pia_listing_hierarchy != "reg_cont" | ala_class %in% class_list)
   
   return(splist)
+}
+
+## This function add the date and time stamp to the file name that will be saved as rds.
+
+write_with_stamp <- function(object, name, dir) {
+  
+  # time stamp e.g., 2025-12-10_14-30
+  stamp <- base::format(Sys.time(), "%Y-%m-%d_%H-%M")
+  
+  # path
+  path <- base::file.path(base::paste0(dir, "/", name, "_", stamp, ".rds"))
+
+  # write
+  base::saveRDS(object, file = path)
+  
+  message("Saved")
 }

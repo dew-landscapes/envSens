@@ -1,0 +1,18 @@
+packages:
+  - dplyr
+  - tidyr
+  - purrr
+  - readr
+  - fs
+  - targets
+  - tarchetypes
+  - renv
+  - broom
+  - stringr
+  - readxl
+
+database:
+  - traitdata
+  - rredlist
+  - galah
+  

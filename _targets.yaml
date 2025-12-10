@@ -1,9 +1,9 @@
-project_010_setup:
-  script: 010_setup.R
-  store: store_010_setup
+taxa:
+  script: 010_taxa.R
+  store: taxa
   reporter_make: balanced
   shortcut: yes
-project_020_taxa:
-  script: script_020_taxa.R
-  store: store_020_taxa
-  inherits: project_010_setup
+bird_db:
+  script: 021_bird_db.R
+  store: bird_db
+  inherits: taxa

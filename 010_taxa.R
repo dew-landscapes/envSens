@@ -14,7 +14,7 @@ tars <- yaml::read_yaml("_targets.yaml")
 # tar source -------
 tar_source()
 
-# setup -------
+# targets -------
 
 tar_plan(
   
@@ -32,27 +32,14 @@ tar_plan(
                              #, format = "file"
   ),
   
-  ## Static database -------
-  
-  tarchetypes::tar_file_read(name = birdbase,
-                             command = "H:/data/envSens/database/data_BIRDBASE v2025.1 Sekercioglu et al. Final.csv",
-                             read = readr::read_csv(file = !!.x, col_types = readr::cols())
-                             #, format = "file"
-  ),
-  
-  tarchetypes::tar_file_read(name = genlength,
-                             command = "H:/data/envSens/database/Modelled_GenLength_cobi13486-sup-0004-tables4.csv",
-                             read = readr::read_csv(file = !!.x, col_types = readr::cols())
-                             #, format = "file"
-  ),
-  
-  tarchetypes::tar_file_read(name = eoo,
-                             command = "H:/data/envSens/database/EOO_cobi13486-sup-0003-tables3.csv",
-                             read = readr::read_csv(file = !!.x, col_types = readr::cols())
-                             #, format = "file"
-  ),
+  ## manipulation -------
   
   splist = rbind(pia_bp, pia_usg) %>% 
     organise_piaout()
+  ,
+  ## write taxa -------
+  
+  tar_file(name = taxa,
+           command = write_with_stamp(splist, "taxa", "taxa/user"))
 )
 
