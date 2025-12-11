@@ -39,9 +39,7 @@ tar_plan(
                          x = "search_term", 
                          Atype = "long"),
   
-  scored = score_bird_sensitivity(mapped)
-  
-  
+  scored = score_bird_sensitivity(mapped, outpath = "bird_score/user")
 )
 
 

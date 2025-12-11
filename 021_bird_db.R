@@ -99,14 +99,28 @@ tar_plan(
         bl_lnGenLength,
         bl_logEOO
       ) %>% 
-      mutate(aub_Breeding_habitat_Agricultural_lands_9 = 
-               ifelse(is.na(aub_Breeding_habitat_Agricultural_lands_9), 
-                      0,
-                      aub_Breeding_habitat_Agricultural_lands_9)) %>%
+      
+      ## clean Ausbirds breeding habitats ------
+    mutate(aub_Breeding_habitat_Agricultural_lands_9 = 
+             ifelse(is.na(aub_Breeding_habitat_Agricultural_lands_9), 
+                    0,
+                    aub_Breeding_habitat_Agricultural_lands_9)) %>%
       mutate(aub_Breeding_habitat_Urban_9 = 
                ifelse(is.na(aub_Breeding_habitat_Urban_9),
                       0, 
-                      aub_Breeding_habitat_Urban_9))
+                      aub_Breeding_habitat_Urban_9)) %>% 
+      
+      ## scale range size ------
+    mutate(scaled_bl_logEOO = 
+             scale_aubird_minmax(sp_col = bird_table$bl_logEOO,
+                                 df = eoo, 
+                                 df_col = "logEOO")$col) %>% 
+      
+      ## scale generation length ------
+    mutate(scaled_bl_lnGenLength = 
+             scale_aubird_minmax(sp_col = bird_table$bl_lnGenLength,
+                                 df = genlength, 
+                                 df_col = "lnGenLength")$col)
   ),
   
   ## Make table for manual filling -------
