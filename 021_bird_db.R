@@ -51,17 +51,17 @@ tar_plan(
   ## PIA taxa -------
   tar_target(name = bird_taxa,
              command = taxa %>% 
-               dplyr::filter(ala_class == "Aves"))
-  ,
+               dplyr::filter(ala_class == "Aves")),
+  
   ## Birdbase trim -------
-  bb = get_birdbase(birdbase)
-  ,
+  bb = get_birdbase(birdbase),
+  
   ## Ausbird trim -------
-  aub = get_ausbird(ausbird)
-  ,
+  aub = get_ausbird(ausbird),
+  
   ## Genlength trim -------
-  genlength = get_genlength(bl_genlength)
-  ,
+  genlength = get_genlength(bl_genlength),
+  
   ## EOO trim -------
   eoo = get_eoo(bl_eoo)
   ,
@@ -73,8 +73,47 @@ tar_plan(
                join_database(genlength, prefix = "bl_", alt = alt.names) %>% 
                join_database(eoo, prefix = "bl_", alt = alt.names) %>% 
                dplyr::distinct() %>% 
-               select(-contains("match")))
+               select(-contains("match"))
+  ),
   
+  ## select cols for sensitivity scoring -------
+  tar_target(
+    name = bird_table_sensitivity,
+    command = bird_table %>% 
+      dplyr::select(
+        search_term, aub_Taxon_common_name_2, # Names
+        aub_National_movement_Total_migrant_13,
+        aub_National_movement_Partial_migrant_13,
+        bb_DB,
+        bb_HB,
+        bb_hb_simpson,
+        bb_db_simpson,
+        bb_RR,
+        aub_breeding_HB,
+        aub_feeding_HB,
+        aub_DB,
+        aub_Feeding_habitat_Agricultural_landscapes_9,
+        aub_Feeding_habitat_Urban_landscapes_9,
+        aub_Breeding_habitat_Agricultural_lands_9,
+        aub_Breeding_habitat_Urban_9,
+        bl_lnGenLength,
+        bl_logEOO
+      ) %>% 
+      mutate(aub_Breeding_habitat_Agricultural_lands_9 = 
+               ifelse(is.na(aub_Breeding_habitat_Agricultural_lands_9), 
+                      0,
+                      aub_Breeding_habitat_Agricultural_lands_9)) %>%
+      mutate(aub_Breeding_habitat_Urban_9 = 
+               ifelse(is.na(aub_Breeding_habitat_Urban_9),
+                      0, 
+                      aub_Breeding_habitat_Urban_9))
+  ),
+  
+  ## Make table for manual filling -------
+  tar_file(
+    name = mtable,
+    command = make_manual_table(bird_table_sensitivity, "bird_db/user")
+  )
 )
 
 

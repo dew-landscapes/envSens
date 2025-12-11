@@ -7,3 +7,7 @@ bird_db:
   script: 021_bird_db.R
   store: bird_db
   inherits: taxa
+bird_score:
+  script: 031_bird_score.R
+  store: bird_score
+  inherits: bird_db

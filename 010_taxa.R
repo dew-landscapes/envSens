@@ -40,6 +40,6 @@ tar_plan(
   ## write taxa -------
   
   tar_file(name = taxa,
-           command = write_with_stamp(splist, "taxa", "taxa/user"))
+           command = write_with_stamp(splist, "taxa", "taxa/user", ext = "rds")
 )
 
