@@ -32,13 +32,14 @@ multi_fuzzy_match <- function(A,
                               max_dist = 3,
                               synonym_limit = 50) {
   
-  ## ---- 1. Round 1: strict fuzzy match (Genus + Species) ----
+  ## ---- 1. Round 1: strict fuzzy match (Genus + Species + common) ----
   match1 <- fuzzyjoin::stringdist_inner_join(
     A,
     B,
     by = c(
       "Genus"   = "B_Genus",
-      "Species" = "B_Species"
+      "Species" = "B_Species",
+      "common"  = "B_common"
     ),
     max_dist = max_dist,
     method = "osa"
@@ -46,8 +47,11 @@ multi_fuzzy_match <- function(A,
     dplyr::mutate(
       match_dist =
         stringdist::stringdist(Genus,   B_Genus,   method = "osa") +
-        stringdist::stringdist(Species, B_Species, method = "osa")
-    )
+        stringdist::stringdist(Species, B_Species, method = "osa") +
+        stringdist::stringdist(common,  B_common,  method = "osa")
+    ) %>% 
+    select(-match_dist) %>% 
+    mutate(match = "r1")
   
   ## ---- 1-1. Unmatched after round 1 ----
   unmatch1 <- dplyr::anti_join(
@@ -55,16 +59,35 @@ multi_fuzzy_match <- function(A,
     match1,
     by = c("Genus" = "B_Genus", "Species" = "B_Species")
   ) %>%
-    dplyr::select(Genus, Species) %>%
+    dplyr::select(Genus, Species, common) %>%
     dplyr::distinct()
+  
+  ## ---- 2. Relaxed match: exact Genus OR Species + fuzzy common ----
+  match2 <- dplyr::cross_join(unmatch1, B) %>%
+    dplyr::filter(
+      Genus == B_Genus | Species == B_Species
+    ) %>%
+    dplyr::mutate(
+      common_dist = stringdist::stringdist(common, B_common, method = "osa")
+    ) %>%
+    dplyr::filter(common_dist < max_dist) %>% 
+    select(-common_dist) %>% 
+    mutate(match = "r2")
+  
+  unmatch2 <- dplyr::anti_join(
+    unmatch1,
+    candidates,
+    by = c("Genus", "Species")
+  ) %>%
+    dplyr::mutate(search_term = paste(Genus, Species))
   
   ## ---- 2. Synonym matching ----
   
   synonyms <- readr::read_csv("data/synonyms.csv")
   
-  syn_match <- unmatch1 %>%
-    mutate(search_term = paste(Genus, Species)) %>% 
-    inner_join(synonyms, by = c("search_term" = ".id")) %>% 
+  syn_match <- unmatch2 %>%
+    mutate(taxa = paste(Genus, Species)) %>% 
+    inner_join(synonyms, by = c("taxa" = ".id")) %>% 
     tidyr::separate(
       name_bi,
       into = c("Genus", "Species"),
@@ -73,15 +96,23 @@ multi_fuzzy_match <- function(A,
     fuzzyjoin::stringdist_left_join(B, by = c("Genus" = "B_Genus", 
                                               "Species" = "B_Species"), 
                                     max_dist = 2, 
-                                    method = "osa") 
-  
-  ## ---- 2. Query new synonyms and match ----
+                                    method = "osa") %>% 
+    filter(!is.na(B_Genus)) %>% 
+    # keep rows with more data
+    mutate(non_na = rowSums(!is.na(across(everything())))) %>%  
+    group_by(taxa) %>%
+    slice_max(non_na, n = 1, with_ties = FALSE) %>%
+    ungroup() %>%
+    mutate(match = "r3") %>% 
+    select(-non_na, name, name_bi)
   
   ## ---- return ----
   return(list(
     match1     = match1,
     unmatch1   = unmatch1,
+    match2 = candidates_filtered,
     unmatch2   = unmatch2,
     syn_matches = syn_matches,
+    unmatch3   = unmatch3
   ))
 }

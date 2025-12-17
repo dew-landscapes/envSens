@@ -25,7 +25,7 @@ write_with_stamp <- function(object, name, dir, ext = c("rds", "csv")) {
   switch(
     ext,
     rds = base::saveRDS(object, file = file_path),
-    csv = utils::write.csv(object, file = file_path, row.names = FALSE)
+    csv = readr::write_csv(object, file = file_path,)
   )
   
   base::message("Saved: ", file_path)
