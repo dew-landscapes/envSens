@@ -6,14 +6,18 @@ packages:
   - fs
   - targets
   - tarchetypes
-  - renv
   - broom
   - stringr
   - readxl
   - arrow
+  - envTargets
+  - envClean
+  - janitor
 
 database:
   - traitdata
   - rredlist
   - galah
+  - ritis
+  - taxize
   
