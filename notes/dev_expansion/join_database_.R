@@ -15,11 +15,11 @@
 #'
 #' @author eryntw
 #' @export
-
 join_database_ <- function(A,
                            B,
                            prefix,
-                           syn_db) {
+                           max_dist = 2,
+                           syn_db = "H:/dev/eryn/envSens/data/synonyms.csv") {
   
   ## ---- 0. Ensure UTF-8 (defensive) ----
   A <- dplyr::mutate(A, dplyr::across(dplyr::where(is.character), stringi::stri_enc_toutf8))
@@ -39,7 +39,7 @@ join_database_ <- function(A,
       .cols = base::intersect(c("Genus", "Species", "common"), names(B))
     )
   
-  ## ---- 1. Round 1: strict (Genus + Species ONLY) ----
+  ## ---- 1. Round 1: strict fuzzy (Genus + Species ONLY) ----
   match1 <- dplyr::inner_join(
     A,
     B,
@@ -60,18 +60,13 @@ join_database_ <- function(A,
   if (use_common) {
     
     match2 <- tidyr::crossing(unmatch1, B) %>%
-      dplyr::mutate(
-        species_dist = stringdist::stringdist(Species, B_Species, method = "osa")
-      ) %>% 
+      dplyr::filter(Genus == B_Genus | Species == B_Species) %>%
       dplyr::mutate(
         common_dist = stringdist::stringdist(common, B_common, method = "osa")
       ) %>%
-      dplyr::filter(Genus == B_Genus | species_dist <= 2) %>%
-      dplyr::filter(common_dist <= 2) %>%
-      dplyr::mutate(match = "r2") %>% 
-      dplyr::select(-common_dist, -species_dist)
+      dplyr::filter(common_dist < max_dist) %>%
+      dplyr::mutate(match = "r2")
     
-    ## ---- 2-1. Unmatched after round 2 ---- 
     unmatch2 <- dplyr::anti_join(
       unmatch1,
       match2,
@@ -94,17 +89,19 @@ join_database_ <- function(A,
   }
   
   ## ---- 3. Synonym matching ----
+  synonyms <- readr::read_csv(syn_db, col_types = readr::cols())
+  
   syn_matches <- unmatch2 %>%
-    dplyr::inner_join(syn_db, by = c("taxa" = ".id")) %>%
+    dplyr::inner_join(synonyms, by = c("taxa" = ".id")) %>%
     tidyr::separate(
       name_bi,
-      into = c("S_Genus", "S_Species"),
+      into = c("Genus", "Species"),
       sep = " ",
       remove = FALSE
     ) %>%
     fuzzyjoin::stringdist_left_join(
       B,
-      by = c("S_Genus" = "B_Genus", "S_Species" = "B_Species"),
+      by = c("Genus" = "B_Genus", "Species" = "B_Species"),
       max_dist = 2,
       method = "osa"
     ) %>%
@@ -127,14 +124,8 @@ join_database_ <- function(A,
     dplyr::mutate(match = "un_r3")
   
   ## ---- Combine ----
-  unwanted_cols <- c("match", "taxa", "name_type", "S_Genus", "S_Species",
-                     "B_Genus", "B_Species", "B_common", "common_dist")
-  matched_cleaned <- dplyr::bind_rows(match1, match2, syn_matches) %>% 
-    dplyr::select(-any_of(unwanted_cols))
-  
-  combined <- A %>% 
-    dplyr::select(search_term) %>% 
-    dplyr::left_join(matched_cleaned, by = "search_term")
-  
-  return(combined)
+  list(
+    match   = dplyr::bind_rows(match1, match2, syn_matches),
+    unmatch = dplyr::bind_rows(unmatch1, unmatch2, unmatch3)
+  )
 }

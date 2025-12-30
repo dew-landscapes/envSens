@@ -31,7 +31,7 @@ score_bird_sensitivity <- function(mapped, outpath) {
     score_DB = 1 - bb_db_simpson,
     
     ## score habitat breadth ------
-    score_HB = 1 - bb_hb_simpson,
+    score_HB = 1/Hb,
     
     ## score range size ------
     scale_rangesize =  1 - scaled_bl_logEOO,
