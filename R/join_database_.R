@@ -132,9 +132,7 @@ join_database_ <- function(A,
   matched_cleaned <- dplyr::bind_rows(match1, match2, syn_matches) %>% 
     dplyr::select(-any_of(unwanted_cols))
   
-  combined <- A %>% 
-    dplyr::select(search_term) %>% 
-    dplyr::left_join(matched_cleaned, by = "search_term")
+  combined <- matched_cleaned %>% bind_rows(unmatch3)
   
   return(combined)
 }

@@ -22,29 +22,29 @@ score_bird_sensitivity <- function(mapped, outpath) {
     
     ## score migration ------
     score_mig = case_when(
-      aub_National_movement_Total_migrant_13 == 1   ~ 3,
-      aub_National_movement_Partial_migrant_13 == 1 ~ 2,
-      TRUE                                          ~ 1) %>% 
+      aub_NationalMovementTotalMigrant13 == 1 ~ 3,
+      aub_NationalMovementPartialMigrant13 == 1 ~ 2,
+      TRUE ~ 1) %>% 
       (\(x) x / 3)(),
     
     ## score diet breadth ------
     score_DB = 1 - bb_db_simpson,
     
     ## score habitat breadth ------
-    score_HB = 1/Hb,
+    score_HB = 1/bb_Hb,
     
     ## score range size ------
-    scale_rangesize =  1 - scaled_bl_logEOO,
+    score_rangesize =  1 - bl_eoo_log10Scaled,
     
     ## score generation length ------
-    scale_genlength = scaled_bl_lnGenLength,
+    score_genlength = bl_genlen_logScaled,
     
     ## score adaptability to modified env ------
-    breedadapt = aub_Breeding_habitat_Agricultural_lands_9 +
-      aub_Breeding_habitat_Urban_9,
+    breedadapt = aub_BreedingHabitatAgriculturalLands9 +
+      aub_BreedingHabitatUrban9,
     
-    feedadapt = aub_Feeding_habitat_Agricultural_landscapes_9 +
-      aub_Feeding_habitat_Urban_landscapes_9,
+    feedadapt = aub_FeedingHabitatAgriculturalLandscapes9 +
+      aub_FeedingHabitatUrbanLandscapes9,
     
     score_adapt = case_when(
       (breedadapt+feedadapt) > 2 ~ 0,
@@ -53,21 +53,17 @@ score_bird_sensitivity <- function(mapped, outpath) {
       (breedadapt+feedadapt) == 0 ~ 3) %>% (\(x) x / 3)(),
     
     ## WEIGH range size ------
-    score_RistrictRange = bb_RR, # Restricted range
+    score_RistrictRange = bb_Rr, # Restricted range
     
-    ) %>%
+  ) %>%
     
     ## calculate sensitivity scores ------    
-    mutate(
-      n_cols = ncol(select(., 
-                           contains("score"), 
-                           contains("scale"))),
-      
-      sensitivity_index = rowSums(select(., 
-                                         contains("score"), 
-                                         contains("scale"))),
-      
-      sensitivity_index_scaled = sensitivity_index / n_cols)
+  mutate(
+    n_cols = ncol(select(., contains("score_"))),
+    
+    sensitivity_index = rowSums(select(., contains("score_"))),
+    
+    sensitivity_index_scaled = sensitivity_index / n_cols)
   
   write_csv(scored, file.path(outpath, "scored_bird_sensitivity.csv"))
   return(scored)
