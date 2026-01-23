@@ -5,34 +5,45 @@ envFunc::check_packages(yaml::read_yaml("settings/packages.yaml") |> unlist() |>
                         , update_env = TRUE
 )
 
-# make tars -------
-## envSens
+# make tars ------- SKIP, KEEP IN PROJ FOLDER
 
-tars_local <- envTargets::make_tars(settings = "settings/scale.yaml") # creates path for output folders/ writes _targets.yaml
+# creates path for output folders/ writes _targets.yaml
 
-## Other project imports
+# tars_local_o <- envTargets::make_tars(settings = "settings/scale.yaml")
 
-tars_clean <- envTargets::make_tars(settings = yaml::read_yaml("settings/scale.yaml")
-                                    , project_base = fs::path("..", "envCleaned")
-                                    , local = TRUE #to get around naming
-                                    , save_yaml = FALSE)
+tars_local_o <- envTargets::make_tars(settings = "settings/scale.yaml",
+                                    store_base = fs::path("..")) 
 
-# tars_pia <- envTargets::make_tars(settings = yaml::read_yaml("settings/scale.yaml")
-#                                     , project_base = fs::path("..", "envPIA")
+tars_local <- purrr::map(
+  tars_local,
+  function(x) {
+    x$store <- sub(
+      "(envSens/)[^/]+/[^/]+/",
+      "\\1",
+      x$store
+    )
+    x
+  }
+)
+
+## Other project imports - NOT WORKING
+
+# tars_clean <- envTargets::make_tars(settings = yaml::read_yaml("settings/scale.yaml")
+#                                     , project_base = fs::path("../../out/", "envCleaned")
 #                                     , local = TRUE #to get around naming
 #                                     , save_yaml = FALSE)
 
 ## collect and write tars
 
-tars <- c(tars_local, tars_clean)
+tars <- c(tars_local)
 envTargets::write_tars(tars)
 
 
 # run everything ----------
 # in _targets.yaml
 
-purrr::walk2(purrr::map(tars, "script")
-             , purrr::map(tars, "store")
+purrr::walk2(purrr::map(tars_local, "script")
+             , purrr::map(tars_local, "store")
              , \(x, y) targets::tar_make(script = x, store = y)
 )
 

@@ -4,8 +4,12 @@ library(crew)
 library(crew.cluster)
 
 use_cores <- parallel::detectCores() - 2
-tar_option_set(packages = yaml::read_yaml("settings/packages.yaml")$packages
-               , controller = crew_controller_local(workers = use_cores))
+
+tar_option_set(
+  packages = yaml::read_yaml("settings/packages.yaml")$packages, 
+  controller = crew_controller_local(workers = use_cores),
+  workspace_on_error = TRUE # inspect the error using tar_traceback(target)
+)
 
 # tars -------
 tars <- yaml::read_yaml("_targets.yaml")
@@ -15,119 +19,85 @@ tar_source()
 
 # targets -------
 
-taxa <- tar_read(splist, store = "taxa")
+splist <- tar_read(splist, store = tars$taxa$store)
+sa_birds <- tar_read(sa_birds, store = tars$taxa$store)
 
 tar_plan(
   
   ## Static database -------
   
+  ## Bird Base 2025 ------
+  
   tarchetypes::tar_file_read(name = birdbase,
-                             command = "H:/data/envSens/database/data_BIRDBASE v2025.1 Sekercioglu et al. Final.csv",
-                             read = readr::read_csv(file = !!.x, col_types = readr::cols())
-                             #, format = "file"
+                             command = "database/data_BIRDBASE v2025.1 Sekercioglu et al. Final.csv",
+                             read = readr::read_csv(file = !!.x, 
+                                                    col_types = readr::cols(),
+                                                    locale = readr::locale(encoding = "ASCII")) %>% 
+                               janitor::clean_names(case = "upper_camel") %>% 
+                               clean_taxa_df(commoncol = EnglishNameBirdLifeIocClementsAviList) %>% 
+                               get_birdbase() # ATTENTION
   ),
   
-  tarchetypes::tar_file_read(name = bl_genlength,
-                             command = "H:/data/envSens/database/latest_generation_lengths_of_the_world's_birds_2025.xlsx",
+  ## Birdlife Generation Length 2025 ------
+  
+  tarchetypes::tar_file_read(name = genlength,
+                             command = "database/latest_generation_lengths_of_the_world's_birds_2025.xlsx",
                              read = readxl::read_excel(path = !!.x, 
                                                        sheet = 1,
                                                        skip = 1,
-                                                       col_types = "guess")
-                             #, format = "file"
+                                                       col_types = "guess") %>%
+                               janitor::clean_names(case = "upper_camel") %>% 
+                               clean_taxa_df(commoncol = EnglishName2024,
+                                             taxa = SpeciesName2024)
   ),
   
-  tarchetypes::tar_file_read(name = bl_eoo,
-                             command = "H:/data/envSens/database/EOO_cobi13486-sup-0003-tables3.csv",
-                             read = readr::read_csv(file = !!.x, col_types = readr::cols())
-                             #, format = "file"
+  ## Birdlife Extent of Occurrence 2020 ------
+  
+  tarchetypes::tar_file_read(name = eoo,
+                             command = "database/EOO_cobi13486-sup-0003-tables3.csv",
+                             read = readr::read_csv(file = !!.x, 
+                                                    col_types = readr::cols()) %>% 
+                               janitor::clean_names(case = "upper_camel") %>% 
+                               clean_taxa_df(taxa = ScientificName)
+  ),  # eoo is messy; required better data from BirdLife
+  
+  ## Australian Birds 2015
+  
+  tar_target(name = ausbird,
+             command = traitdata::australian_birds %>%
+               setNames(gsub("^X\\d+_", "", names(.))) %>%
+               dplyr::filter(Extinct_4 == 0) %>% 
+               janitor::clean_names(case = "upper_camel") %>% 
+               clean_taxa_df(commoncol = TaxonCommonName2) %>% 
+               filter(is.na(SubspeciesName2)) # Most subspecies have no data
   ),
   
-  # tarchetypes::tar_file_read(name = ala_taxonomy,
-  #                            command = "H:/data/taxonomy/galah.parquet",
-  #                            read = readr::read_csv(file = !!.x, col_types = readr::cols())
-  #                            #, format = "file"
-  # ),
-  # 
-  ## PIA taxa -------
-  tar_target(name = bird_taxa,
-             command = taxa %>% 
-               dplyr::filter(ala_class == "Aves")),
+  ## Match database species -------
   
-  ## Birdbase trim -------
-  bb = get_birdbase(birdbase),
-  
-  ## Ausbird trim -------
-  aub = get_ausbird(ausbird),
-  
-  ## Genlength trim -------
-  genlength = get_genlength(bl_genlength),
-  
-  ## EOO trim -------
-  eoo = get_eoo(bl_eoo)
-  ,
-  ## Combined database -------
-  tar_target(name = bird_table,
-             command = bird_taxa %>% 
-               join_database(aub, prefix = "aub_", alt = alt.names) %>% 
-               join_database(bb, prefix = "bb_", alt = alt.names) %>% 
-               join_database(genlength, prefix = "bl_", alt = alt.names) %>% 
-               join_database(eoo, prefix = "bl_", alt = alt.names) %>% 
-               dplyr::distinct() %>% 
-               select(-contains("match"))
+  tar_file_read(name = syn_db, 
+                command = fs::path("data/synonyms.csv"),
+                read = readr::read_csv(!!.x, col_types = readr::cols())
   ),
   
-  ## select cols for sensitivity scoring -------
-  tar_target(
-    name = bird_table_sensitivity,
-    command = bird_table %>% 
-      dplyr::select(
-        search_term, aub_Taxon_common_name_2, # Names
-        aub_National_movement_Total_migrant_13,
-        aub_National_movement_Partial_migrant_13,
-        bb_DB,
-        bb_HB,
-        bb_hb_simpson,
-        bb_db_simpson,
-        bb_RR,
-        aub_breeding_HB,
-        aub_feeding_HB,
-        aub_DB,
-        aub_Feeding_habitat_Agricultural_landscapes_9,
-        aub_Feeding_habitat_Urban_landscapes_9,
-        aub_Breeding_habitat_Agricultural_lands_9,
-        aub_Breeding_habitat_Urban_9,
-        bl_lnGenLength,
-        bl_logEOO
-      ) %>% 
-      
-      ## clean Ausbirds breeding habitats ------
-    mutate(aub_Breeding_habitat_Agricultural_lands_9 = 
-             ifelse(is.na(aub_Breeding_habitat_Agricultural_lands_9), 
-                    0,
-                    aub_Breeding_habitat_Agricultural_lands_9)) %>%
-      mutate(aub_Breeding_habitat_Urban_9 = 
-               ifelse(is.na(aub_Breeding_habitat_Urban_9),
-                      0, 
-                      aub_Breeding_habitat_Urban_9)) %>% 
-      
-      ## scale range size ------
-    mutate(scaled_bl_logEOO = 
-             scale_aubird_minmax(sp_col = bird_table$bl_logEOO,
-                                 df = eoo, 
-                                 df_col = "logEOO")$col) %>% 
-      
-      ## scale generation length ------
-    mutate(scaled_bl_lnGenLength = 
-             scale_aubird_minmax(sp_col = bird_table$bl_lnGenLength,
-                                 df = genlength, 
-                                 df_col = "lnGenLength")$col)
+  ## join database: sa_birds -------
+  tar_target(name = joined_table,
+             command = sa_birds %>%
+               join_database_(birdbase, prefix = "bb_", syn_db = syn_db) %>%
+               join_database_(genlength, prefix = "bl_", syn_db = syn_db) %>%
+               join_database_(eoo, prefix = "bl_", syn_db = syn_db) %>%
+               join_database_(ausbird, prefix = "aub_", syn_db = syn_db) %>%
+               dplyr::mutate(
+                 bl_eoo_log10Scaled = scales::rescale(log10(bl_ExtentOfOccurrenceBreedingResident),
+                                                      to = c(0, 1), na.rm = TRUE),
+                 bl_genlen_logScaled = scales::rescale(log(bl_GenerationLength),
+                                                       to = c(0, 1), na.rm = TRUE)
+               )
+
   ),
   
-  ## Make table for manual filling -------
-  tar_file(
-    name = mtable,
-    command = make_manual_table(bird_table_sensitivity, "bird_db/user")
-  )
+  ## join database: pilot areas -------
+  pilot_subset = left_join(splist, joined_table, by = "search_term")
+  
 )
 
 

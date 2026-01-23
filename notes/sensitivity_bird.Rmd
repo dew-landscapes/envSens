@@ -38,6 +38,7 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
 # Introduction
+
 This report summarises recent progress on bird sensitivity data manipulation and analysis, including data cleaning, recategorisation, summary statistics, and any modelling or workflow steps completed to date.
 
 # Data Import and Cleaning

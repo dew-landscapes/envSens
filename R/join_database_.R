@@ -129,10 +129,10 @@ join_database_ <- function(A,
   ## ---- Combine ----
   unwanted_cols <- c("match", "taxa", "name_type", "S_Genus", "S_Species",
                      "B_Genus", "B_Species", "B_common", "common_dist")
-  matched_cleaned <- dplyr::bind_rows(match1, match2, syn_matches) %>% 
-    dplyr::select(-any_of(unwanted_cols))
   
-  combined <- matched_cleaned %>% bind_rows(unmatch3)
+  combined <- dplyr::bind_rows(match1, match2, syn_matches) %>% 
+    bind_rows(unmatch3) %>% 
+    dplyr::select(-any_of(unwanted_cols))
   
   return(combined)
 }

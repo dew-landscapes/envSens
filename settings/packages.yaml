@@ -13,6 +13,7 @@ packages:
   - envTargets
   - envClean
   - janitor
+  - scales
 
 database:
   - traitdata
@@ -20,4 +21,5 @@ database:
   - galah
   - ritis
   - taxize
+  - taxadb
   

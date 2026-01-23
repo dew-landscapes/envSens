@@ -16,30 +16,57 @@ tar_source()
 
 # targets -------
 
-tar_plan(
+targets <- list (
   
-  ## Input species list -------
+  ## Input species list options -------
   
-  tarchetypes::tar_file_read(name = pia_bp,
-                             command = "data/taxa_summary_Braemer Province.csv",
-                             read = readr::read_csv(file = !!.x, col_types = readr::cols())
-                             #, format = "file"
+  # All SA animals
+  tarchetypes::tar_file_read(name = sa_animals,
+                             command = fs::path("H:/dev/out/envCleaned/aus_imcra_prov_dissolve______0__P50Y__sa_br_dissolve/90__90__P1Y__species/clean/objects/bio_clean"),
+                             read = arrow::open_dataset(!!.x) %>%
+                               dplyr::filter(grepl(" ", taxa), kingdom == "Animalia") %>%
+                               dplyr::select(taxa, common) %>%
+                               dplyr::distinct() %>%
+                               dplyr::collect() %>%
+                               envClean::make_taxonomy(taxa_col = "taxa")
   ),
-  
-  tarchetypes::tar_file_read(name = pia_usg,
-                             command = "data/taxa_summary_Upper Spencer Gulf - Gawler Ranges.csv",
-                             read = readr::read_csv(file = !!.x, col_types = readr::cols())
-                             #, format = "file"
-  ),
-  
-  ## manipulation -------
-  
-  splist = rbind(pia_bp, pia_usg) %>% 
-    organise_piaout()
-  ,
-  ## write taxa -------
-  
-  tar_file(name = taxa,
-           command = write_with_stamp(splist, "taxa", "taxa/user", ext = "rds")
-)
 
+  # All SA birds
+  tar_target(name = sa_birds,
+             command = sa_animals %>%
+               .$raw %>%
+               filter(class == "Aves") %>%
+               inner_join(sa_animals %>%
+                            .$species %>%
+                            .$lutaxa %>%
+                            select(original_name, taxa),
+                          by = "original_name") %>%
+               clean_taxa_df(commoncol = vernacular_name,
+                             taxacol = search_term) %>%
+               select(search_term, Genus, Species)
+
+  ),
+
+  # USG species
+  tarchetypes::tar_file_read(name = usg,
+                             command = fs::path("data/taxa_summary_Upper Spencer Gulf - Gawler Ranges.csv"),
+                             read = readr::read_csv(!!.x, col_types = readr::cols())
+  ),
+  
+  # BP species
+  tarchetypes::tar_file_read(name = bp,
+                             command = fs::path("data/taxa_summary_Braemer Province.csv"),
+                             read = readr::read_csv(!!.x, col_types = readr::cols())
+  ),
+  
+  ## Target species list ------
+  tar_target(name = splist,
+             command = usg %>% 
+               dplyr::bind_rows(bp) %>% 
+               organise_piaout() %>% 
+               .$Aves %>% 
+               clean_taxa_df(taxacol = search_term, 
+                             commoncol = ala_vernacular_name)
+  )
+  
+)

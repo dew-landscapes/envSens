@@ -16,14 +16,14 @@ tar_source()
 
 # targets -------
 
-info_table <- tar_read(info_table, store = "bird_db")
+info_table <- tar_read(info_table, store = tars$bird_mtable$store)
 
 tar_plan(
   
   ## Read manually processed mtable -------
-
+  
   tar_file_read(name = processed_mtable,
-                command = "bird_db/user/mtable.csv",
+                command = "data/current_mtable.csv",
                 read = readr::read_csv(!!.x, col_types = readr::cols())
   ),
   
@@ -32,13 +32,13 @@ tar_plan(
   tar_target(name = mapped_table,
              command =  processed_mtable %>%
                map_by_rowcol(
-                 B = info_table,
+                 B = info_table %>% readr::type_convert(),
                  x = "search_term",
                  Atype = "long"
-               ) %>%
-               clean_bird_sensitivity()),
+               )
+  ),
   
-  scored_table = score_bird_sensitivity(mapped_table, outpath = "bird_score/user")
+  scored_table = score_bird_sensitivity(mapped_table, outpath = tars$bird_score$store)
 )
 
 

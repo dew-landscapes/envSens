@@ -19,14 +19,14 @@ tar_source()
 
 # targets -------
 
-joined_table <- tar_read(joined_table, store = tars$bird_db$store)
+pilot_subset <- tar_read(pilot_subset, store = tars$bird_db$store)
 
 tar_plan(
   
   ## select cols for sensitivity scoring -------
   tar_target(
     info_table,
-    joined_table %>%
+    pilot_subset %>%
       dplyr::select(
         search_term, common, # Names
         aub_NationalMovementTotalMigrant13,
@@ -35,12 +35,15 @@ tar_plan(
         bb_Hb,
         bb_db_simpson,
         bb_Rr,
+        bb_ElevationalRange,
         aub_FeedingHabitatAgriculturalLandscapes9,
         aub_FeedingHabitatUrbanLandscapes9,
         aub_BreedingHabitatAgriculturalLands9,
         aub_BreedingHabitatUrban9,
         bl_GenerationLength,
-        bl_ExtentOfOccurrenceBreedingResident
+        bl_ExtentOfOccurrenceBreedingResident,
+        bl_eoo_log10Scaled,
+        bl_genlen_logScaled
       ) %>%
       dplyr::mutate(
         dplyr::across(

@@ -18,7 +18,7 @@ get_birdbase <- function(birdbase) {
   
   birdbase_trim <- birdbase %>%
     dplyr::select(Genus, Species, common,
-                  PrimaryDiet, Db, Hb, Rr,
+                  PrimaryDiet, Db, Hb, Rr, ElevationalRange,
                   db_cols, hb_cols) %>% 
     dplyr::mutate(dplyr::across(dplyr::where(is.character), ~ dplyr::na_if(., "T"))) %>% 
     dplyr::mutate(dplyr::across(hb_cols, ~ tidyr::replace_na(., 0))) %>% 

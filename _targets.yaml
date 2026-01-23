@@ -1,13 +1,12 @@
 taxa:
-  script: 010_taxa.R
-  store: taxa
-  reporter_make: balanced
-  shortcut: yes
+  script: ../envSens/010_taxa.R
+  store: ../envSens/taxa
 bird_db:
-  script: 021_bird_db.R
-  store: bird_db
-  inherits: taxa
+  script: ../envSens/021_bird_db.R
+  store: ../envSens/bird_db
+bird_mtable:
+  script: ../envSens/031_bird_mtable.R
+  store: ../envSens/bird_mtable
 bird_score:
-  script: 031_bird_score.R
-  store: bird_score
-  inherits: bird_db
+  script: ../envSens/041_bird_score.R
+  store: ../envSens/bird_score
