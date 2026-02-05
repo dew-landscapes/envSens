@@ -24,6 +24,19 @@ sa_birds <- tar_read(sa_birds, store = tars$taxa$store)
 
 tar_plan(
   
+  ## Extracted environmental variables -------
+  
+  tarchetypes::tar_file_read(name = summary_df,
+                             command = fs::path("../RecExtract/output/summary_df.parquet"),
+                             read = arrow::open_dataset(!!.x) %>%
+                               dplyr::collect() %>% 
+                               replace_taxa(taxa_col = "taxa") %>% 
+                               dplyr::inner_join(sa_birds, by = c("taxa" = "search_term")) %>% 
+                               normalise_minmax(cols = dplyr::select(., dplyr::contains("range_90")) %>% 
+                                                  names())
+  ),
+  
+  
   ## Static database -------
   
   ## Bird Base 2025 ------
@@ -51,15 +64,30 @@ tar_plan(
                                              taxa = SpeciesName2024)
   ),
   
-  ## Birdlife Extent of Occurrence 2020 ------
+  ## Birdlife attributes 2026 ------
   
-  tarchetypes::tar_file_read(name = eoo,
-                             command = "database/EOO_cobi13486-sup-0003-tables3.csv",
-                             read = readr::read_csv(file = !!.x, 
-                                                    col_types = readr::cols()) %>% 
+  tarchetypes::tar_file_read(name = birdlife_attr,
+                             command = "database/BirdLife data on Australian birds/Australian bird species attributes.xlsx",
+                             read = readxl::read_excel(path = !!.x, 
+                                                       sheet = 1,
+                                                       col_types = "guess") %>%
                                janitor::clean_names(case = "upper_camel") %>% 
-                               clean_taxa_df(taxa = ScientificName)
-  ),  # eoo is messy; required better data from BirdLife
+                               clean_taxa_df(commoncol = CommonName,
+                                             taxa = ScientificName)
+  ),
+  
+  ## Birdlife habitats 2026 ------
+  
+  tarchetypes::tar_file_read(name = birdlife_hab,
+                             command = "database/BirdLife data on Australian birds/Habitats.xlsx",
+                             read = readxl::read_excel(path = !!.x, 
+                                                       sheet = 1,
+                                                       col_types = "guess") %>%
+                               janitor::clean_names(case = "upper_camel") %>% 
+                               score_iucn_habitat() %>% 
+                               clean_taxa_df(commoncol = CommonName,
+                                             taxa = ScientificName)
+  ),
   
   ## Australian Birds 2015
   
@@ -84,15 +112,10 @@ tar_plan(
              command = sa_birds %>%
                join_database_(birdbase, prefix = "bb_", syn_db = syn_db) %>%
                join_database_(genlength, prefix = "bl_", syn_db = syn_db) %>%
-               join_database_(eoo, prefix = "bl_", syn_db = syn_db) %>%
+               join_database_(birdlife_attr, prefix = "bl_", syn_db = syn_db) %>%
+               join_database_(birdlife_hab, prefix = "bl_", syn_db = syn_db) %>%
                join_database_(ausbird, prefix = "aub_", syn_db = syn_db) %>%
-               dplyr::mutate(
-                 bl_eoo_log10Scaled = scales::rescale(log10(bl_ExtentOfOccurrenceBreedingResident),
-                                                      to = c(0, 1), na.rm = TRUE),
-                 bl_genlen_logScaled = scales::rescale(log(bl_GenerationLength),
-                                                       to = c(0, 1), na.rm = TRUE)
-               )
-
+               join_database_(summary_df, prefix = "rec_", syn_db = syn_db)
   ),
   
   ## join database: pilot areas -------

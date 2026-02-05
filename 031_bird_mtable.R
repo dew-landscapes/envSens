@@ -25,34 +25,27 @@ tar_plan(
   
   ## select cols for sensitivity scoring -------
   tar_target(
-    info_table,
-    pilot_subset %>%
+    name = info_table,
+    command = 
+      pilot_subset %>%
       dplyr::select(
         search_term, common, # Names
-        aub_NationalMovementTotalMigrant13,
-        aub_NationalMovementPartialMigrant13,
+        bl_Family, # ID raptors
         bb_Db,
-        bb_Hb,
         bb_db_simpson,
         bb_Rr,
+        bb_Hb,
         bb_ElevationalRange,
-        aub_FeedingHabitatAgriculturalLandscapes9,
-        aub_FeedingHabitatUrbanLandscapes9,
-        aub_BreedingHabitatAgriculturalLands9,
-        aub_BreedingHabitatUrban9,
+        bl_MigratoryStatus,
         bl_GenerationLength,
-        bl_ExtentOfOccurrenceBreedingResident,
-        bl_eoo_log10Scaled,
-        bl_genlen_logScaled
-      ) %>%
-      dplyr::mutate(
-        dplyr::across(
-          dplyr::matches("Urban|Agricul"),
-          ~ tidyr::replace_na(.x, 0L)
-        )
+        bl_RlEooSmallerOfBreedingAndNonBreedingEoo,
+        bl_scaledHB_L1,
+        bl_logscaledHBscore_L2,
+        bl_anthro_LogHabitat_scaled,
+        rec_stern_dehoedt_2000_minor_simpson,
+        rec_geom_90M_s10e110_simpson, 
+        `rec_dem-9s_range_90_10_norm`
       )
-    ## Replace NA with 0 in urban and agriculture breeders;
-    ## These are migratory water birds
   ),
   
   

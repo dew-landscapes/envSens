@@ -1,21 +1,18 @@
-
+library(dplyr)
 library(targets)
 
 envFunc::check_packages(yaml::read_yaml("settings/packages.yaml") |> unlist() |> unname()
                         , update_env = TRUE
 )
 
-# make tars ------- SKIP, KEEP IN PROJ FOLDER
-
+# make tars ------- 
 # creates path for output folders/ writes _targets.yaml
 
-# tars_local_o <- envTargets::make_tars(settings = "settings/scale.yaml")
-
 tars_local_o <- envTargets::make_tars(settings = "settings/scale.yaml",
-                                    store_base = fs::path("..")) 
+                                      store_base = fs::path("..")) 
 
 tars_local <- purrr::map(
-  tars_local,
+  tars_local_o,
   function(x) {
     x$store <- sub(
       "(envSens/)[^/]+/[^/]+/",
@@ -26,14 +23,7 @@ tars_local <- purrr::map(
   }
 )
 
-## Other project imports - NOT WORKING
-
-# tars_clean <- envTargets::make_tars(settings = yaml::read_yaml("settings/scale.yaml")
-#                                     , project_base = fs::path("../../out/", "envCleaned")
-#                                     , local = TRUE #to get around naming
-#                                     , save_yaml = FALSE)
-
-## collect and write tars
+## Write tars ------
 
 tars <- c(tars_local)
 envTargets::write_tars(tars)

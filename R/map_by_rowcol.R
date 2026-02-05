@@ -13,7 +13,7 @@
 #' @param B data frame to map values TO
 #' @param x character, reference column name present in both A and B
 #' @param namecase optional, ignored (reserved for future use)
-#' @param Atype character, `"long"` to pivot A wider; otherwise no pivoting
+#' @param Atype character, `"long"` to pivot A wider; otherwise no pivoting; assuming WIDE format.
 #' @param overwrite logical, whether to overwrite existing values in B (default FALSE)
 #' @param keepcols logical, whether to keep ALL unique columns from A and B (default FALSE)
 #'
@@ -91,9 +91,10 @@ map_by_rowcol <- function(A, B, x,
                           overwrite = FALSE,
                           keepcols = FALSE) {
   
-  # Pivot A if long format
+  # Pivot A from long format
   if (!is.null(Atype) && Atype == "long") {
-    A <- tidyr::pivot_wider(A, names_from = "trait", values_from = "value")
+    A <- tidyr::pivot_wider(A, names_from = "trait", values_from = "value") %>% 
+      readr::type_convert()
   }
   
   # Reference column check

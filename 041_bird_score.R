@@ -17,6 +17,7 @@ tar_source()
 # targets -------
 
 info_table <- tar_read(info_table, store = tars$bird_mtable$store)
+joined_table <- tar_read(joined_table, store = tars$bird_db$store)
 
 tar_plan(
   
@@ -27,18 +28,32 @@ tar_plan(
                 read = readr::read_csv(!!.x, col_types = readr::cols())
   ),
   
-  ## map the data from processed mtable to the info table -------
+  ## Scaling range, generation length and elevation using all AU birds ------
   
-  tar_target(name = mapped_table,
-             command =  processed_mtable %>%
-               map_by_rowcol(
-                 B = info_table %>% readr::type_convert(),
-                 x = "search_term",
-                 Atype = "long"
-               )
+  tar_target(name = scaled_infotable,
+             command = map_by_rowcol(A = processed_mtable, 
+                                     B = joined_table %>% 
+                                       dplyr::select(dplyr::any_of(names(info_table))),
+                                     x = "search_term", 
+                                     Atype = "long") %>% 
+               dplyr::mutate(
+                 bl_eoo_log10Scaled = scales::rescale(log10(bl_RlEooSmallerOfBreedingAndNonBreedingEoo),
+                                                      to = c(0, 1), na.rm = TRUE),
+                 bl_genlen_logScaled = scales::rescale(log(bl_GenerationLength),
+                                                       to = c(0, 1), na.rm = TRUE),
+                 bl_log10ElevScaled = scales::rescale(log10(`rec_dem-9s_range_90_10_norm`),
+                                                       to = c(0, 1), na.rm = TRUE)
+               ) %>% 
+               dplyr::inner_join(info_table %>% dplyr::select("search_term", "common"),
+                                 by = "search_term")
+             
   ),
   
-  scored_table = score_bird_sensitivity(mapped_table, outpath = tars$bird_score$store)
+  ## Final score table ------
+  
+  scored_table = score_bird_sensitivity(scaled_infotable,
+                                        outpath = tars$bird_score$store,
+                                        return = "scored")
 )
 
 

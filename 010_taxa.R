@@ -27,24 +27,18 @@ targets <- list (
                                dplyr::filter(grepl(" ", taxa), kingdom == "Animalia") %>%
                                dplyr::select(taxa, common) %>%
                                dplyr::distinct() %>%
-                               dplyr::collect() %>%
-                               envClean::make_taxonomy(taxa_col = "taxa")
+                               dplyr::collect()
   ),
 
   # All SA birds
   tar_target(name = sa_birds,
-             command = sa_animals %>%
-               .$raw %>%
-               filter(class == "Aves") %>%
-               inner_join(sa_animals %>%
-                            .$species %>%
-                            .$lutaxa %>%
-                            select(original_name, taxa),
-                          by = "original_name") %>%
+             command = galah::search_taxa(sa_animals$taxa) %>% 
+               dplyr::distinct() %>% 
+               dplyr::filter(class == "Aves") %>%
+               replace_taxa(taxa_col = "search_term") %>% 
                clean_taxa_df(commoncol = vernacular_name,
                              taxacol = search_term) %>%
-               select(search_term, Genus, Species)
-
+               dplyr::select(search_term, Genus, Species)
   ),
 
   # USG species
@@ -65,6 +59,7 @@ targets <- list (
                dplyr::bind_rows(bp) %>% 
                organise_piaout() %>% 
                .$Aves %>% 
+               replace_taxa(taxa_col = "search_term") %>% 
                clean_taxa_df(taxacol = search_term, 
                              commoncol = ala_vernacular_name)
   )

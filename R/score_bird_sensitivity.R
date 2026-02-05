@@ -1,71 +1,154 @@
-#' .. content for \description{} (no empty lines) ..
+#' Score bird sensitivity based on ecological traits
 #'
-#' .. content for \details{} ..
+#' Calculates composite sensitivity indices for bird species based on
+#' specialisation, life-history constraints, and adaptability traits.
+#' The function cleans input data, computes trait-level scores, aggregates
+#' them into thematic indices, and optionally writes the full scored table
+#' to disk.
 #'
-#' @title
-#' @param mapped
-#' @return
-#' @author eryntw
+#' Sensitivity dimensions include:
+#' \itemize{
+#'   \item Climate specialisation (range size, climate breadth, elevation)
+#'   \item Habitat breadth
+#'   \item Diet breadth
+#'   \item Life-history constraints (migration, generation length, range restriction)
+#'   \item Adaptability to modified environments
+#' }
+#'
+#' All indices are scaled between 0 and 1, where higher values indicate
+#' greater sensitivity.
+#'
+#' @param mapped A data frame containing mapped bird traits.
+#'   Must include all variables referenced in the scoring rules.
+#' @param outpath Character string giving the directory where the scored
+#'   CSV file will be written.
+#' @param return Character string specifying what to return:
+#'   \code{"raw"} returns the original data with indices only;
+#'   \code{"scored"} returns only ID columns and index variables.
+#'
+#' @return A tibble with bird sensitivity indices, depending on \code{return}.
+#'
+#' @author Eryn
 #' @export
-#' 
-score_bird_sensitivity <- function(mapped, outpath) {
+#'
+#' @examples
+#' \dontrun{
+#' scored <- score_bird_sensitivity(
+#'   mapped = bird_traits,
+#'   outpath = "outputs/",
+#'   return = "scored"
+#' )
+#' }
+score_bird_sensitivity <- function(
+    mapped,
+    outpath,
+    return = c("raw", "scored")
+) {
   
-  scored <- mapped %>% 
-    
-    ## clean values and set types ------
+  return <- match.arg(return)
   
-  mutate(across(where(is.character), ~na_if(., "NAV"))) %>% 
-    readr::type_convert() %>% 
+  scored <- mapped %>%
     
-    ## scoring traits ------
-  mutate(
+    # ---- Clean values and enforce types ----------------------------------
+  dplyr::mutate(
+    dplyr::across(where(is.character), ~ na_if(.x, "NAV"))
+  ) %>%
+    readr::type_convert() %>%
     
-    ## score migration ------
-    score_mig = case_when(
-      aub_NationalMovementTotalMigrant13 == 1 ~ 3,
-      aub_NationalMovementPartialMigrant13 == 1 ~ 2,
-      TRUE ~ 1) %>% 
-      (\(x) x / 3)(),
+    # ---- Trait scoring ----------------------------------------------------
+  dplyr::mutate(
     
-    ## score diet breadth ------
-    score_DB = 1 - bb_db_simpson,
+    #### SPECIALISATION ----
     
-    ## score habitat breadth ------
-    score_HB = 1/bb_Hb,
+    # Climate
+    score_clim_rangesize  = 1 - bl_eoo_log10Scaled,
+    score_clim_breadth    = 1 - rec_stern_dehoedt_2000_minor_simpson,
+    score_clim_elevation  = 1 - bl_log10ElevScaled,
     
-    ## score range size ------
-    score_rangesize =  1 - bl_eoo_log10Scaled,
+    index_climate = rowMeans(
+      dplyr::pick(dplyr::starts_with("score_clim_")),
+      na.rm = TRUE
+    ),
     
-    ## score generation length ------
-    score_genlength = bl_genlen_logScaled,
+    # Habitat
+    index_habitat = 1 - (0.6*bl_scaledHB_L1 + 0.4*bl_logscaledHBscore_L2),
     
-    ## score adaptability to modified env ------
-    breedadapt = aub_BreedingHabitatAgriculturalLands9 +
-      aub_BreedingHabitatUrban9,
+    # Diet
+    index_diet = 1 - bb_db_simpson,
     
-    feedadapt = aub_FeedingHabitatAgriculturalLandscapes9 +
-      aub_FeedingHabitatUrbanLandscapes9,
+    #### LIFE-HISTORY CONSTRAINTS ----
     
-    score_adapt = case_when(
-      (breedadapt+feedadapt) > 2 ~ 0,
-      breedadapt > 0 ~ 1,
-      feedadapt > 0 ~ 2,
-      (breedadapt+feedadapt) == 0 ~ 3) %>% (\(x) x / 3)(),
+    # Migration
+    score_cons_mig = dplyr::case_when(
+      bl_MigratoryStatus == "Full migrant" ~ 3,
+      bl_MigratoryStatus == "Altitudinal migrant" ~ 2,
+      TRUE ~ 1
+    ) / 3,
     
-    ## WEIGH range size ------
-    score_RistrictRange = bb_Rr, # Restricted range
+    # Generation length
+    score_cons_genlength = bl_genlen_logScaled,
     
+    # Restricted range
+    score_cons_restrictedrange = bb_Rr,
+    
+    # Raptor 
+    score_cons_raptor = if_else(
+      bl_Family %in% c(
+        "Barn-owls",
+        "Typical Owls",
+        "Hawks, Eagles",
+        "Kites",
+        "Falcons, Caracaras"
+      ),
+      1L, 0L),
+    
+    
+    index_constraint = (score_cons_mig + 
+                          0.5*score_cons_genlength +
+                          score_cons_restrictedrange + 
+                          0.5*score_cons_raptor)/3,
+    
+    #### ADAPTABILITY ----
+    
+    # Modified environment use
+    
+    index_adapt = 1 - bl_anthro_LogHabitat_scaled
   ) %>%
     
-    ## calculate sensitivity scores ------    
-  mutate(
-    n_cols = ncol(select(., contains("score_"))),
+    # ---- Final sensitivity index -----------------------------------------
+  dplyr::mutate(
+    n_indices = base::ncol(dplyr::select(., dplyr::starts_with("index_"))),
     
-    sensitivity_index = rowSums(select(., contains("score_"))),
+    sensitivity_index =
+      rowSums(dplyr::select(., dplyr::starts_with("index_")), na.rm = TRUE),
     
-    sensitivity_index_scaled = sensitivity_index / n_cols)
+    sensitivity_index_averaged =
+      sensitivity_index / n_indices
+  ) %>% 
+    dplyr::mutate(dplyr::across(dplyr::where(is.numeric), round, 2))
   
-  write_csv(scored, file.path(outpath, "scored_bird_sensitivity.csv"))
-  return(scored)
+  # ---- Write output -------------------------------------------------------
+  readr::write_csv(
+    scored,
+    file.path(outpath, "scored_bird_sensitivity.csv")
+  )
   
+  # ---- Return object ------------------------------------------------------
+  if (return == "raw") {
+    scored %>%
+      dplyr::select(
+        search_term,
+        common,
+        !dplyr::starts_with("score_"),
+        !dplyr::starts_with("index_")
+      )
+  } else {
+    scored %>%
+      dplyr::select(
+        search_term,
+        common,
+        dplyr::starts_with("score_"),
+        dplyr::contains("index_")
+      )
+  }
 }
