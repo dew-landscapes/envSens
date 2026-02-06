@@ -6,3 +6,5 @@ bird_db/
 bird_mtable/
 bird_score/
 notes/
+.Rhistory
+.env
