@@ -1,1 +1,8 @@
 .Rproj.user
+data/
+database/
+taxa/
+bird_db/
+bird_mtable/
+bird_score/
+notes/
