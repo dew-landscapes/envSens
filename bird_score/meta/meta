@@ -1,24 +1,34 @@
 name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
 mapped_table|stem|2eef8c8199e32ec9|98c754213e8c62ab|ddf3e92ed74aa0b4|1741152066||t20487.3307778212s|s4765b|4765|rds|local|vector|||0.234||
 score_anthropogenic_habitat|function|54f9f87085d434f2
-processed_mtable|stem|4cf8e35deb016bd6|a5791dfaf007c671|2ef71216964fc2c9|-19774196||t20488.4328441868s|s561b|561|rds|local|vector|||0.141||
+score_ag_urb_adaptation|function|f3635a097de01b2b
+processed_mtable|stem|4eb41043f8c6c37e|a5791dfaf007c671|039cc2de542fb18b|-19774196||t20489.3755962221s|s667b|667|rds|local|vector|||0.125||
+scored_table|stem|79d50c44887acf8c|70b50faa46cdde08|0bdcbfc43bc2b3bb|880569336||t20489.3957670523s|s3277b|3277|rds|local|vector|||0.672|There was 1 warning in `dplyr::mutate()`. ℹ In argument: `dplyr::across(dplyr::where(is.numeric), round, 2)`. Caused by warning: ! The `...` argument of `across()` is deprecated as of dplyr 1.1.0. Supply arguments directly to `.fns` through an anonymous function instead.    # Previously   across(a:b, mean, na.rm = TRUE)    # Now   across(a:b, \(x) mean(x, na.rm = TRUE))|
+score_bird_sensitivity_simple|function|24b0de3fff5aaad6
+score_bird_sensitivity|function|862b44134e851581
+processed_mtable_file|stem|3a3f3200193dfd2e|498a90f6ba579aeb|2c530c1562a7fbd1|-250962099|data/current_mtable.csv|t20490.0529894346s|s1531b|1531|file|local|vector|||1.234|package 'dplyr' was built under R version 4.5.2. package 'tidyr' was built under R version 4.5.2. package 'purrr' was built under R version 4.5.2. package 'readr' was built under R version 4.5.2. package 'fs' was built under R version 4.5.2. package 'targets' was built under R version 4.5.2. package 'tarchetypes' was built under R version 4.5.2. package 'broom' was built under R version 4.5.2. package 'stringr' was built under R version 4.5.2. package 'readxl' was built under R version 4.5.2. package 'arrow' was built under R version 4.5.2. package 'janitor' was built under R version 4.5.2. package 'scales' was built under R version 4.5.2|
+scaled_infotable|stem|8f62c1ba7babe46e|c794997c4bd5d430|2e7cbab4d23eaad8|-1571928363||t20490.053547973s|s7267b|7267|rds|local|vector|||0.312||
 replace_taxa|function|78a4ccb0889f0e78
 tars|object|841468e3dd1b99ec
 calc_diversity|function|a99b28c254500bfe
-score_bird_sensitivity|function|69b6500316588223
-info_table|object|bfe01cb9082bf584
+plot_correlation_heatmap|function|deaf869daf6037a2
+score_ag_urb_habitats|function|13ded7f0d8b37eff
+info_table|object|7f935b0833c250a2
 write_with_stamp|function|36fa6efe32f2b898
 clean_taxa_df|function|3a6c4f24c333eb36
 organise_piaout|function|50ba3aeb6e2a0678
 normalise_minmax|function|a72823af8c7f2f16
 filter_by_coverage|function|53304e38afd7c9b8
 use_cores|object|eced30da0c13a5bf
+birdsens_v1_original|function|24b0de3fff5aaad6
+birdsens_v2_poolall|function|019a9d5ecf378b98
 map_by_rowcol|function|0b2315a830c15104
 join_database_|function|fb537dea454af16a
-joined_table|object|a5c34470b9999876
+joined_table|object|d8a0c003f45f24fd
+birdsens_v3_mixed|function|862b44134e851581
 score_iucn_habitat|function|c102073af1c0094b
-get_birdbase|function|cdc65ec7a220b1e5
+get_birdbase|function|3be36ab4eff16028
 make_manual_table|function|af22e7f50e420e21
-processed_mtable_file|stem|d9a08c4abeebfec9|498a90f6ba579aeb|2c530c1562a7fbd1|-250962099|data/current_mtable.csv|t20489.0584282845s|s594b|594|file|local|vector|||1.375|package 'dplyr' was built under R version 4.5.2. package 'tidyr' was built under R version 4.5.2. package 'purrr' was built under R version 4.5.2. package 'readr' was built under R version 4.5.2. package 'fs' was built under R version 4.5.2. package 'targets' was built under R version 4.5.2. package 'tarchetypes' was built under R version 4.5.2. package 'broom' was built under R version 4.5.2. package 'stringr' was built under R version 4.5.2. package 'readxl' was built under R version 4.5.2. package 'arrow' was built under R version 4.5.2. package 'janitor' was built under R version 4.5.2. package 'scales' was built under R version 4.5.2|
-scaled_infotable|stem|7217b21e004fce29|536df29ce3fa1125|97e0d8648f111e7e|-1571928363||t20489.0585757935s|s6865b|6865|rds|local|vector|||0.281||
-scored_table|stem|227c09fbb7a60f85|70b50faa46cdde08|2a2e011375770a89|880569336||t20489.0585841178s|s3406b|3406|rds|local|vector|||0.39|There was 1 warning in `dplyr::mutate()`. ℹ In argument: `dplyr::across(dplyr::where(is.numeric), round, 2)`. Caused by warning: ! The `...` argument of `across()` is deprecated as of dplyr 1.1.0. Supply arguments directly to `.fns` through an anonymous function instead.    # Previously   across(a:b, mean, na.rm = TRUE)    # Now   across(a:b, \(x) mean(x, na.rm = TRUE))|
+scored_table_v1|stem|80ad7b2ed206fcc6|051ef08baea60f1b|8d4e1a294d05f60c|-1426250363||t20490.0553948352s|s2806b|2806|rds|local|vector|||0.562|There was 1 warning in `dplyr::mutate()`. ℹ In argument: `dplyr::across(dplyr::where(is.numeric), round, 2)`. Caused by warning: ! The `...` argument of `across()` is deprecated as of dplyr 1.1.0. Supply arguments directly to `.fns` through an anonymous function instead.    # Previously   across(a:b, mean, na.rm = TRUE)    # Now   across(a:b, \(x) mean(x, na.rm = TRUE))|
+scored_table_v3|stem|53061887297bb740|fc33b55b4e621761|67b7ed3bba07c645|1466219278||t20490.0553973676s|s3208b|3208|rds|local|vector|||0.578|There was 1 warning in `dplyr::mutate()`. ℹ In argument: `dplyr::across(dplyr::where(is.numeric), round, 2)`. Caused by warning: ! The `...` argument of `across()` is deprecated as of dplyr 1.1.0. Supply arguments directly to `.fns` through an anonymous function instead.    # Previously   across(a:b, mean, na.rm = TRUE)    # Now   across(a:b, \(x) mean(x, na.rm = TRUE))|
+scored_table_v2|stem|0b48d4950ce5e802|c8177c90cfbdcfe2|2e8da2829f15ef92|732542641||t20490.0553989956s|s3488b|3488|rds|local|vector|||0.609|There was 1 warning in `dplyr::mutate()`. ℹ In argument: `dplyr::across(dplyr::where(is.numeric), round, 2)`. Caused by warning: ! The `...` argument of `across()` is deprecated as of dplyr 1.1.0. Supply arguments directly to `.fns` through an anonymous function instead.    # Previously   across(a:b, mean, na.rm = TRUE)    # Now   across(a:b, \(x) mean(x, na.rm = TRUE))|

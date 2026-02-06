@@ -39,7 +39,7 @@
 #'   return = "scored"
 #' )
 #' }
-score_bird_sensitivity <- function(
+birdsens_v1_original <- function(
     mapped,
     outpath,
     return = c("raw", "scored")
@@ -60,18 +60,11 @@ score_bird_sensitivity <- function(
     
     #### SPECIALISATION ----
     
-    # Climate
-    score_clim_rangesize  = 1 - bl_eoo_log10Scaled,
-    score_clim_breadth    = 1 - rec_stern_dehoedt_2000_minor_simpson,
-    score_clim_elevation  = 1 - bl_log10ElevScaled,
-    
-    index_climate = rowMeans(
-      dplyr::pick(dplyr::starts_with("score_clim_")),
-      na.rm = TRUE
-    ),
+    # Range size
+    index_clim_rangesize  = 1 - bl_eoo_log10Scaled,
     
     # Habitat
-    index_habitat = 1 - (0.6*bl_scaledHB_L1 + 0.4*bl_logscaledHBscore_L2),
+    index_habitat = 1/bb_Hb,
     
     # Diet
     index_diet = 1 - bb_db_simpson,
@@ -79,40 +72,20 @@ score_bird_sensitivity <- function(
     #### LIFE-HISTORY CONSTRAINTS ----
     
     # Migration
-    score_cons_mig = dplyr::case_when(
-      bl_MigratoryStatus == "Full migrant" ~ 3,
-      bl_MigratoryStatus == "Altitudinal migrant" ~ 2,
-      TRUE ~ 1
-    ) / 3,
+    index_cons_mig = scales::rescale(bb_mig_score, to = c(0, 1)),
     
     # Generation length
-    score_cons_genlength = bl_genlen_logScaled,
+    index_cons_genlength = 0.5*bl_genlen_logScaled,
     
     # Restricted range
-    score_cons_restrictedrange = bb_Rr,
-    
-    # Raptor 
-    score_cons_raptor = if_else(
-      bl_Family %in% c(
-        "Barn-owls",
-        "Typical Owls",
-        "Hawks, Eagles",
-        "Kites",
-        "Falcons, Caracaras"
-      ),
-      1L, 0L),
-    
-    
-    index_constraint = (score_cons_mig + 
-                          0.5*score_cons_genlength +
-                          score_cons_restrictedrange + 
-                          0.5*score_cons_raptor)/3,
+    index_cons_restrictedrange = bb_Rr,
     
     #### ADAPTABILITY ----
     
     # Modified environment use
     
-    index_adapt = 1 - bl_anthro_LogHabitat_scaled
+    index_adapt = aub_scaled_adapt,
+    
   ) %>%
     
     # ---- Final sensitivity index -----------------------------------------
@@ -120,17 +93,15 @@ score_bird_sensitivity <- function(
     n_indices = base::ncol(dplyr::select(., dplyr::starts_with("index_"))),
     
     sensitivity_index =
-      rowSums(dplyr::select(., dplyr::starts_with("index_")), na.rm = TRUE),
+      rowSums(dplyr::select(., dplyr::starts_with("index_")), na.rm = TRUE)/n_indices
     
-    sensitivity_index_averaged =
-      sensitivity_index / n_indices
   ) %>% 
     dplyr::mutate(dplyr::across(dplyr::where(is.numeric), round, 2))
   
   # ---- Write output -------------------------------------------------------
   readr::write_csv(
     scored,
-    file.path(outpath, "scored_bird_sensitivity.csv")
+    file.path(outpath, "bird_sensitivity_v1.csv")
   )
   
   # ---- Return object ------------------------------------------------------

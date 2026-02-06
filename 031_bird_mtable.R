@@ -31,11 +31,17 @@ tar_plan(
       dplyr::select(
         search_term, common, # Names
         bl_Family, # ID raptors
+        aub_BreedingHabitatAgriculturalLands9,
+        aub_BreedingHabitatUrban9,
+        aub_FeedingHabitatAgriculturalLandscapes9,
+        aub_FeedingHabitatUrbanLandscapes9,
+        aub_Migratory6,
         bb_Db,
         bb_db_simpson,
         bb_Rr,
         bb_Hb,
         bb_ElevationalRange,
+        bb_mig_score,
         bl_MigratoryStatus,
         bl_GenerationLength,
         bl_RlEooSmallerOfBreedingAndNonBreedingEoo,

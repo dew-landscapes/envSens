@@ -115,7 +115,9 @@ tar_plan(
                join_database_(birdlife_attr, prefix = "bl_", syn_db = syn_db) %>%
                join_database_(birdlife_hab, prefix = "bl_", syn_db = syn_db) %>%
                join_database_(ausbird, prefix = "aub_", syn_db = syn_db) %>%
-               join_database_(summary_df, prefix = "rec_", syn_db = syn_db)
+               join_database_(summary_df, prefix = "rec_", syn_db = syn_db) %>% 
+               mutate(across(matches("^aub_(Feeding|Breeding)Habitat(Agricultural|Urban)$"),
+                             ~ tidyr::replace_na(., 0))) # NA is migratory birds
   ),
   
   ## join database: pilot areas -------

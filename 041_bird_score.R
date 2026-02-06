@@ -42,18 +42,27 @@ tar_plan(
                  bl_genlen_logScaled = scales::rescale(log(bl_GenerationLength),
                                                        to = c(0, 1), na.rm = TRUE),
                  bl_log10ElevScaled = scales::rescale(log10(`rec_dem-9s_range_90_10_norm`),
-                                                       to = c(0, 1), na.rm = TRUE)
+                                                      to = c(0, 1), na.rm = TRUE)
                ) %>% 
                dplyr::inner_join(info_table %>% dplyr::select("search_term", "common"),
-                                 by = "search_term")
+                                 by = "search_term") %>% 
+               score_ag_urb_habitats()
              
   ),
   
   ## Final score table ------
   
-  scored_table = score_bird_sensitivity(scaled_infotable,
+  scored_table_v1 = birdsens_v1_original(scaled_infotable,
+                                         outpath = tars$bird_score$store,
+                                         return = "scored"),
+  
+  scored_table_v2 = birdsens_v2_poolall(scaled_infotable,
                                         outpath = tars$bird_score$store,
-                                        return = "scored")
+                                        return = "scored"),
+  
+  scored_table_v3 = birdsens_v3_mixed(scaled_infotable,
+                                      outpath = tars$bird_score$store,
+                                      return = "scored")
 )
 
 

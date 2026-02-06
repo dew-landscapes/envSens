@@ -5,7 +5,6 @@ birdbase_file|stem|5df52dd530335471|2a7b72d03bd560c4|2c530c1562a7fbd1|186201121|
 ausbird|stem|7c007b7190c0f611|4c02d2bdb40376a3|1d98b58956b3e4e9|-1748255982||t20476.1834396727s|s184701b|184701|rds|local|vector|||2.812|package 'dplyr' was built under R version 4.5.2. package 'tidyr' was built under R version 4.5.2. package 'purrr' was built under R version 4.5.2. package 'readr' was built under R version 4.5.2. package 'fs' was built under R version 4.5.2. package 'targets' was built under R version 4.5.2. package 'tarchetypes' was built under R version 4.5.2. package 'broom' was built under R version 4.5.2. package 'stringr' was built under R version 4.5.2. package 'readxl' was built under R version 4.5.2. package 'arrow' was built under R version 4.5.2. package 'janitor' was built under R version 4.5.2. package 'scales' was built under R version 4.5.2|
 genlength|stem|176d72ecaeae942f|5d5a1e96f9c75b83|198a6bd84d333e0d|-1986582909||t20476.1834434718s|s256073b|256073|rds|local|vector|||0.438||
 eoo|stem|41fbbc970c8ca641|e955b909c68db27c|8d5574042a4319a2|-484639936||t20476.1834434718s|s327521b|327521|rds|local|vector|||0.656||
-birdbase|stem|430c39420813aefd|dc8c21e5fe67886b|b53cac0bb35903ea|2045661551||t20476.1981189156s|s298373b|298373|rds|local|vector|||17.812|One or more parsing issues, call `problems()` on your data frame for details, e.g.:   dat <- vroom(...)   problems(dat). Using an external vector in selections was deprecated in tidyselect 1.1.0. ℹ Please use `all_of()` or `any_of()` instead.   # Was:   data %>% select(db_cols)    # Now:   data %>% select(all_of(db_cols))  See <https://tidyselect.r-lib.org/reference/faq-external-vector.html>.. Using an external vector in selections was deprecated in tidyselect 1.1.0. ℹ Please use `all_of()` or `any_of()` instead.   # Was:   data %>% select(hb_cols)    # Now:   data %>% select(all_of(hb_cols))  See <https://tidyselect.r-lib.org/reference/faq-external-vector.html>.|
 birdlife_attr_file|stem|4c5c11080581edcd|0fac0637fc299be6|2c530c1562a7fbd1|1265337450|database/BirdLife data on Australian birds/Australian bird species attributes.xlsx|t20479.3422916667s|s120059b|120059|file|local|vector|||1.422|package 'dplyr' was built under R version 4.5.2. package 'tidyr' was built under R version 4.5.2. package 'purrr' was built under R version 4.5.2. package 'readr' was built under R version 4.5.2. package 'fs' was built under R version 4.5.2. package 'targets' was built under R version 4.5.2. package 'tarchetypes' was built under R version 4.5.2. package 'broom' was built under R version 4.5.2. package 'stringr' was built under R version 4.5.2. package 'readxl' was built under R version 4.5.2. package 'arrow' was built under R version 4.5.2. package 'janitor' was built under R version 4.5.2. package 'scales' was built under R version 4.5.2|
 birdlife_hab_file|stem|29cdb4a37ec7bb21|a798957ffed08b01|2c530c1562a7fbd1|-1429658387|database/BirdLife data on Australian birds/Habitats.xlsx|t20485.1769526217s|s529331b|529331|file|local|vector|||1.375|package 'dplyr' was built under R version 4.5.2. package 'tidyr' was built under R version 4.5.2. package 'purrr' was built under R version 4.5.2. package 'readr' was built under R version 4.5.2. package 'fs' was built under R version 4.5.2. package 'targets' was built under R version 4.5.2. package 'tarchetypes' was built under R version 4.5.2. package 'broom' was built under R version 4.5.2. package 'stringr' was built under R version 4.5.2. package 'readxl' was built under R version 4.5.2. package 'arrow' was built under R version 4.5.2. package 'janitor' was built under R version 4.5.2. package 'scales' was built under R version 4.5.2|
 summary_df_file|stem|bc1734672b29d6ab|1bdfdb5c90668e95|2c530c1562a7fbd1|640978650|../RecExtract/output/summary_df.parquet|t20485.998624778s|s2431994b|2431994|file|local|vector|||1.562|package 'dplyr' was built under R version 4.5.2. package 'tidyr' was built under R version 4.5.2. package 'purrr' was built under R version 4.5.2. package 'readr' was built under R version 4.5.2. package 'fs' was built under R version 4.5.2. package 'targets' was built under R version 4.5.2. package 'tarchetypes' was built under R version 4.5.2. package 'broom' was built under R version 4.5.2. package 'stringr' was built under R version 4.5.2. package 'readxl' was built under R version 4.5.2. package 'arrow' was built under R version 4.5.2. package 'janitor' was built under R version 4.5.2. package 'scales' was built under R version 4.5.2|
@@ -16,22 +15,30 @@ syn_db_file|stem|e16e2bfd17487777|413fe3b466017e9f|2c530c1562a7fbd1|91946406|dat
 syn_db|stem|c57a251a6d10a347|c379b3cbad0ae81f|de205ac7c5030f22|-1482214086||t20488.3414360368s|s7088b|7088|rds|local|vector|||0.219||
 summary_df|stem|3175733bbe1966f7|a2598b7767f3a18a|d61c377bb9403097|-1003994681||t20488.4433306221s|s64604b|64604|rds|local|vector|||0.218||
 birdlife_hab|stem|7c90ea6ccc9e38e6|39b010bef6971eb7|466cbb073dc35675|921664290||t20489.0574592869s|s22144b|22144|rds|local|vector|||0.922|There was 1 warning in `dplyr::mutate()`. ℹ In argument: `dplyr::across(dplyr::where(is.numeric), round, 2)`. Caused by warning: ! The `...` argument of `across()` is deprecated as of dplyr 1.1.0. Supply arguments directly to `.fns` through an anonymous function instead.    # Previously   across(a:b, mean, na.rm = TRUE)    # Now   across(a:b, \(x) mean(x, na.rm = TRUE))|
-joined_table|stem|d9cdef3ea07b6de9|5c0dfa0adfb160f3|d9daafe21f1f9a63|1836894566||t20489.0575053505s|s193296b|193296|rds|local|vector|||3.188||
-pilot_subset|stem|e13402d9b8fe21b2|c71272270a8afabf|838bd262eb5a9a79|937230583||t20489.057508427s|s37770b|37770|rds|local|vector|||0||
+score_ag_urb_adaptation|function|f3635a097de01b2b
+birdbase|stem|6902392c81835639|dc8c21e5fe67886b|e2a27d4549637ca4|2045661551||t20489.3742478648s|s308196b|308196|rds|local|vector|||17.828|One or more parsing issues, call `problems()` on your data frame for details, e.g.:   dat <- vroom(...)   problems(dat). Using an external vector in selections was deprecated in tidyselect 1.1.0. ℹ Please use `all_of()` or `any_of()` instead.   # Was:   data %>% select(db_cols)    # Now:   data %>% select(all_of(db_cols))  See <https://tidyselect.r-lib.org/reference/faq-external-vector.html>.. Using an external vector in selections was deprecated in tidyselect 1.1.0. ℹ Please use `all_of()` or `any_of()` instead.   # Was:   data %>% select(hb_cols)    # Now:   data %>% select(all_of(hb_cols))  See <https://tidyselect.r-lib.org/reference/faq-external-vector.html>.|
+joined_table|stem|e273e17c2e69bedc|90618875716993b9|df08557ba8894717|1836894566||t20489.3742944871s|s193994b|193994|rds|local|vector|||3.422||
+pilot_subset|stem|7bfcffcaa541c253|c71272270a8afabf|0557ab12fd2cdf24|937230583||t20489.3742979757s|s38054b|38054|rds|local|vector|||0.016||
+score_bird_sensitivity_simple|function|24b0de3fff5aaad6
+score_bird_sensitivity|function|862b44134e851581
 replace_taxa|function|78a4ccb0889f0e78
 tars|object|841468e3dd1b99ec
 calc_diversity|function|a99b28c254500bfe
 splist|object|b159b8fb4f066b6e
 sa_birds|object|539a69d33d5c6920
-score_bird_sensitivity|function|69b6500316588223
+plot_correlation_heatmap|function|deaf869daf6037a2
+score_ag_urb_habitats|function|13ded7f0d8b37eff
 write_with_stamp|function|36fa6efe32f2b898
 clean_taxa_df|function|3a6c4f24c333eb36
 organise_piaout|function|50ba3aeb6e2a0678
 normalise_minmax|function|a72823af8c7f2f16
 filter_by_coverage|function|53304e38afd7c9b8
 use_cores|object|eced30da0c13a5bf
+birdsens_v1_original|function|24b0de3fff5aaad6
+birdsens_v2_poolall|function|019a9d5ecf378b98
 map_by_rowcol|function|0b2315a830c15104
 join_database_|function|fb537dea454af16a
+birdsens_v3_mixed|function|862b44134e851581
 score_iucn_habitat|function|c102073af1c0094b
-get_birdbase|function|cdc65ec7a220b1e5
+get_birdbase|function|3be36ab4eff16028
 make_manual_table|function|af22e7f50e420e21
