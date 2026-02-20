@@ -1,0 +1,21 @@
+################################
+# current project
+envSens:
+  store:
+    store: "_targets"
+
+#################################
+envCleaned:
+  store: NULL
+  extent:
+    vector: "aus_imcra_prov_dissolve"
+    filt_col: NULL
+    filt_level: NULL
+    buffer: 0
+    extent_time: "P100Y" # must be a period of years
+    extent_taxa: "sa_br_dissolve"
+  grain:
+    grain_x: 90
+    grain_y: 90
+    grain_time: "P1Y" # must be either P1M or P1Y (used to set contexts)
+    taxonomic: "species"

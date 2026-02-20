@@ -1,12 +1,25 @@
 taxa:
   script: ../envSens/010_taxa.R
-  store: ../envSens/taxa
+  store: ../../out/envSens/_targets/taxa
 bird_db:
   script: ../envSens/021_bird_db.R
-  store: ../envSens/bird_db
+  store: ../../out/envSens/_targets/bird_db
 bird_mtable:
   script: ../envSens/031_bird_mtable.R
-  store: ../envSens/bird_mtable
+  store: ../../out/envSens/_targets/bird_mtable
 bird_score:
   script: ../envSens/041_bird_score.R
-  store: ../envSens/bird_score
+  store: ../../out/envSens/_targets/bird_score
+envCleaned:
+  clean:
+    script: ../envCleaned/010_clean.R
+    store: ../../out/envCleaned/aus_imcra_prov_dissolve______0__P100Y__sa_br_dissolve/90__90__P1Y__species/clean
+  outliers:
+    script: ../envCleaned/020_outliers.R
+    store: ../../out/envCleaned/aus_imcra_prov_dissolve______0__P100Y__sa_br_dissolve/90__90__P1Y__species/outliers
+  report_prep:
+    script: ../envCleaned/040_report_prep.R
+    store: ../../out/envCleaned/aus_imcra_prov_dissolve______0__P100Y__sa_br_dissolve/90__90__P1Y__species/report_prep
+  report:
+    script: ../envCleaned/050_report.R
+    store: ../../out/envCleaned/aus_imcra_prov_dissolve______0__P100Y__sa_br_dissolve/90__90__P1Y__species/report
