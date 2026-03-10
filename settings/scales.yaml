@@ -1,12 +1,5 @@
-################################
-# current project
-envSens:
-  store:
-    store: "_targets"
 
-#################################
 envCleaned:
-  store: NULL
   extent:
     vector: "aus_imcra_prov_dissolve"
     filt_col: NULL
@@ -19,3 +12,19 @@ envCleaned:
     grain_y: 90
     grain_time: "P1Y" # must be either P1M or P1Y (used to set contexts)
     taxonomic: "species"
+    
+################################
+# current project
+envSens:
+  extent: NULL
+  grain: NULL
+  store:
+    store: "_targets"
+
+#################################
+
+# pia data for concern
+# don't need aoi here as we're after results from all the aois
+envPIA:
+  extent:
+    extent_time: "P50Y"
